@@ -1,0 +1,28 @@
+# Binaries
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Project specific binaries
+backend
+main
+pady
+
+# Go workspace file
+go.work
+
+# Dependency directories
+vendor/
+
+# Environment Variables
+.env
+
+# IDE and OS specific files
+.idea/
+.vscode/
+.DS_Store
