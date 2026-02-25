@@ -1,0 +1,27 @@
+# Environment variables
+.env
+*.env
+.env.*
+
+# macOS specific hidden files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Editor and IDE directories
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Docker ignoring
+pgdata/
+postgres_data/
+
+# General OS files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
