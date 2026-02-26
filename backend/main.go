@@ -1,7 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"arit-pal/pady/app"
+)
 
 func main() {
-	fmt.Println("Go backend is ready to rock!")
+	app.Start()
 }
