@@ -17,6 +17,8 @@ func Start() {
 
 	db.Connect()
 
+	db.RunMigrations()
+
 	port := os.Getenv("SERVER_PORT")
 	server := &http.Server{
 		Addr:    ":" + port,

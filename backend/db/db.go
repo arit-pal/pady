@@ -12,7 +12,7 @@ import (
 
 var Pool *pgxpool.Pool
 
-func Connect() {
+func GetDSN() string {
 	err := godotenv.Load("../.env")
 	if err != nil {
 		log.Println("Warning: No .env file found or unable to load, using system environment variables")
@@ -25,6 +25,12 @@ func Connect() {
 	dbname := os.Getenv("POSTGRES_DB")
 
 	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", user, password, host, port, dbname)
+
+	return dsn
+}
+
+func Connect() {
+	dsn := GetDSN()
 
 	config, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
