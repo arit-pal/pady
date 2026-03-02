@@ -13,11 +13,6 @@ import (
 var Pool *pgxpool.Pool
 
 func GetDSN() string {
-	err := godotenv.Load("../.env")
-	if err != nil {
-		log.Println("Warning: No .env file found or unable to load, using system environment variables")
-	}
-
 	user := os.Getenv("POSTGRES_USER")
 	password := os.Getenv("POSTGRES_PASSWORD")
 	host := os.Getenv("POSTGRES_HOST")
@@ -30,6 +25,10 @@ func GetDSN() string {
 }
 
 func Connect() {
+	err := godotenv.Load("../.env")
+	if err != nil {
+		log.Println("Warning: No .env file found or unable to load, using system environment variables")
+	}
 	dsn := GetDSN()
 
 	config, err := pgxpool.ParseConfig(dsn)

@@ -1,6 +1,7 @@
 package app
 
 import (
+	"arit-pal/pady/config"
 	"arit-pal/pady/db"
 	"context"
 	"fmt"
@@ -19,10 +20,17 @@ func Start() {
 
 	db.RunMigrations()
 
+	config.InitJwtSecret()
+
 	port := os.Getenv("SERVER_PORT")
+	if port == "" {
+		port = "8000"
+	}
+
+	mux := http.NewServeMux()
 	server := &http.Server{
 		Addr:    ":" + port,
-		Handler: nil,
+		Handler: mux,
 	}
 
 	go func() {
