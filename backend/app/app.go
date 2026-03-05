@@ -1,6 +1,7 @@
 package app
 
 import (
+	"arit-pal/pady/api"
 	"arit-pal/pady/config"
 	"arit-pal/pady/db"
 	"context"
@@ -16,7 +17,10 @@ import (
 func Start() {
 	fmt.Println("Starting up the Go server...")
 
-	db.Connect()
+	pool, err := db.Connect()
+	if err != nil {
+		log.Fatalf("Failed to initialize database: %v", err)
+	}
 
 	db.RunMigrations()
 
@@ -27,7 +31,7 @@ func Start() {
 		port = "8000"
 	}
 
-	mux := http.NewServeMux()
+	mux := api.NewRouter(pool)
 	server := &http.Server{
 		Addr:    ":" + port,
 		Handler: mux,
@@ -53,7 +57,8 @@ func Start() {
 		log.Fatalf("Server forced to shutdown: %v", err)
 	}
 
-	db.Close()
+	pool.Close()
+	fmt.Println("Database connection pool closed.")
 
 	fmt.Println("Server gracefully stopped.")
 }

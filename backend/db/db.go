@@ -10,8 +10,6 @@ import (
 	"github.com/joho/godotenv"
 )
 
-var Pool *pgxpool.Pool
-
 func GetDSN() string {
 	user := os.Getenv("POSTGRES_USER")
 	password := os.Getenv("POSTGRES_PASSWORD")
@@ -24,7 +22,7 @@ func GetDSN() string {
 	return dsn
 }
 
-func Connect() {
+func Connect() (*pgxpool.Pool, error) {
 	err := godotenv.Load("../.env")
 	if err != nil {
 		log.Println("Warning: No .env file found or unable to load, using system environment variables")
@@ -33,24 +31,18 @@ func Connect() {
 
 	config, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
-		log.Fatalf("Unable to parse database configuration: %v\n", err)
+		return nil, fmt.Errorf("Unable to parse database configuration: %w", err)
 	}
 
-	Pool, err = pgxpool.NewWithConfig(context.Background(), config)
+	pool, err := pgxpool.NewWithConfig(context.Background(), config)
 	if err != nil {
-		log.Fatalf("Unable to connect to database: %v\n", err)
+		return nil, fmt.Errorf("Unable to connect to database: %w", err)
 	}
 
-	if err := Pool.Ping(context.Background()); err != nil {
-		log.Fatalf("Database ping failed: %v\n", err)
+	if err := pool.Ping(context.Background()); err != nil {
+		return nil, fmt.Errorf("Database ping failed: %w", err)
 	}
 
 	fmt.Println("Successfully connected to the PostgreSQL database!")
-}
-
-func Close() {
-	if Pool != nil {
-		Pool.Close()
-		fmt.Println("Database connection pool closed.")
-	}
+	return pool, nil
 }
