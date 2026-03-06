@@ -6,17 +6,17 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type UserRepo struct {
+type userRepo struct {
 	pool *pgxpool.Pool
 }
 
 func NewUserRepo(pool *pgxpool.Pool) UserRepository {
-	return &UserRepo{
+	return &userRepo{
 		pool: pool,
 	}
 }
 
-func (r *UserRepo) UserSignUp(ctx context.Context, user *User) error {
+func (r *userRepo) UserSignUp(ctx context.Context, user *User) error {
 	query := `
 		INSERT INTO users (full_name, email, password_hash)
 		VALUES ($1, $2, $3)
@@ -38,7 +38,7 @@ func (r *UserRepo) UserSignUp(ctx context.Context, user *User) error {
 	return err
 }
 
-func (r *UserRepo) CheckEmailExists(ctx context.Context, email string) (bool, error) {
+func (r *userRepo) CheckEmailExists(ctx context.Context, email string) (bool, error) {
 	query := `
 		SELECT EXISTS(SELECT 1 FROM users WHERE email = $1)
 	`
@@ -56,4 +56,34 @@ func (r *UserRepo) CheckEmailExists(ctx context.Context, email string) (bool, er
 	}
 
 	return exists, nil
+}
+
+func (r *userRepo) GetUserByEmail(ctx context.Context, email string) (*User, error) {
+	query := `
+		SELECT id, full_name, email, password_hash, status, created_at, updated_at, deleted_at
+		FROM users
+		WHERE email = $1 AND status = 'active'
+	`
+
+	user := &User{}
+	err := r.pool.QueryRow(
+		ctx,
+		query,
+		email,
+	).Scan(
+		&user.ID,
+		&user.FullName,
+		&user.Email,
+		&user.PasswordHash,
+		&user.Status,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+		&user.DeletedAt,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }

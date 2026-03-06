@@ -26,6 +26,7 @@ func NewRouter(dbPool *pgxpool.Pool) http.Handler {
 	userHandler := handlers.NewUserHandler(userService)
 
 	mux.HandleFunc("POST /api/v1/signup", userHandler.UserSignUp)
+	mux.HandleFunc("POST /api/v1/login", userHandler.UserSignIn)
 
 	return c.Handler(mux)
 }

@@ -10,6 +10,7 @@ import (
 type UserRepository interface {
 	UserSignUp(ctx context.Context, user *User) error
 	CheckEmailExists(ctx context.Context, email string) (bool, error)
+	GetUserByEmail(ctx context.Context, email string) (*User, error)
 }
 
 type User struct {

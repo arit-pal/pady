@@ -1,6 +1,7 @@
 package service
 
 import (
+	"arit-pal/pady/config"
 	"arit-pal/pady/domain"
 	"arit-pal/pady/dto"
 	"arit-pal/pady/mapper"
@@ -15,6 +16,7 @@ import (
 
 type UserService interface {
 	UserSignUp(ctx context.Context, req *dto.SignUpRequest) (uuid.UUID, error)
+	UserSignIn(ctx context.Context, req *dto.SignInRequest) (string, error)
 }
 
 type userService struct {
@@ -59,4 +61,29 @@ func (s *userService) UserSignUp(ctx context.Context, req *dto.SignUpRequest) (u
 	}
 
 	return user.ID, nil
+}
+
+func (s *userService) UserSignIn(ctx context.Context, req *dto.SignInRequest) (string, error) {
+	req.Email = strings.TrimSpace(strings.ToLower(req.Email))
+
+	if req.Email == "" || req.Password == "" {
+		return "", errors.New("Invalid input: missing required fields")
+	}
+
+	user, err := s.repo.GetUserByEmail(ctx, req.Email)
+	if err != nil {
+		return "", errors.New("Invalid email or password")
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password))
+	if err != nil {
+		return "", errors.New("Invalid email or password")
+	}
+
+	token, err := config.GenerateToken(user.ID, user.Email)
+	if err != nil {
+		return "", fmt.Errorf("Failed to generate token: %w", err)
+	}
+
+	return token, nil
 }
