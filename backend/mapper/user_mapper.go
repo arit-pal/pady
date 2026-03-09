@@ -12,3 +12,15 @@ func ToUserDomain(req *dto.SignUpRequest, passwordHash string) *domain.User {
 		PasswordHash: passwordHash,
 	}
 }
+
+func ToUserResponseDTO(user *domain.User) *dto.UserResponse {
+	return &dto.UserResponse{
+		ID:        user.ID,
+		FullName:  user.FullName,
+		Email:     user.Email,
+		Status:    user.Status,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+		DeletedAt: user.DeletedAt,
+	}
+}

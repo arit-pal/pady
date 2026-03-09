@@ -2,9 +2,12 @@ package handlers
 
 import (
 	"arit-pal/pady/dto"
+	"arit-pal/pady/middleware"
 	"arit-pal/pady/service"
 	"encoding/json"
 	"net/http"
+
+	"github.com/google/uuid"
 )
 
 type userHandler struct {
@@ -62,5 +65,29 @@ func (h *userHandler) UserSignIn(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(dto.SignInResponse{
 		Token:   token,
 		Message: "Login successful",
+	})
+}
+
+func (h *userHandler) UserGetMe(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	id, ok := r.Context().Value(middleware.IDKey).(uuid.UUID)
+	if !ok {
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Unauthorized: Invalid user ID in context"})
+		return
+	}
+
+	user, err := h.userService.UserGetByID(r.Context(), id)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(dto.GetMeResponse{
+		UserResponse: user,
+		Message:      "User retrieved successfully",
 	})
 }

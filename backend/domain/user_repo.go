@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -75,6 +76,35 @@ func (r *userRepo) GetUserByEmail(ctx context.Context, email string) (*User, err
 		&user.FullName,
 		&user.Email,
 		&user.PasswordHash,
+		&user.Status,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+		&user.DeletedAt,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func (r *userRepo) GetUserByID(ctx context.Context, id uuid.UUID) (*User, error) {
+	query := `
+		SELECT id, full_name, email, status, created_at, updated_at, deleted_at
+		FROM users
+		WHERE id = $1 AND status = 'active'
+	`
+
+	user := &User{}
+	err := r.pool.QueryRow(
+		ctx,
+		query,
+		id,
+	).Scan(
+		&user.ID,
+		&user.FullName,
+		&user.Email,
 		&user.Status,
 		&user.CreatedAt,
 		&user.UpdatedAt,

@@ -17,6 +17,7 @@ import (
 type UserService interface {
 	UserSignUp(ctx context.Context, req *dto.SignUpRequest) (uuid.UUID, error)
 	UserSignIn(ctx context.Context, req *dto.SignInRequest) (string, error)
+	UserGetByID(ctx context.Context, userID uuid.UUID) (*dto.UserResponse, error)
 }
 
 type userService struct {
@@ -86,4 +87,13 @@ func (s *userService) UserSignIn(ctx context.Context, req *dto.SignInRequest) (s
 	}
 
 	return token, nil
+}
+
+func (s *userService) UserGetByID(ctx context.Context, id uuid.UUID) (*dto.UserResponse, error) {
+	user, err := s.repo.GetUserByID(ctx, id)
+	if err != nil {
+		return nil, errors.New("User not found")
+	}
+
+	return mapper.ToUserResponseDTO(user), nil
 }
