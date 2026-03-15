@@ -12,6 +12,7 @@ type UserRepository interface {
 	CheckEmailExists(ctx context.Context, email string) (bool, error)
 	GetUserByEmail(ctx context.Context, email string) (*User, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (*User, error)
+	UserSoftDelete(ctx context.Context, id uuid.UUID) error
 }
 
 type User struct {

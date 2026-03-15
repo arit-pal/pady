@@ -17,7 +17,8 @@ import (
 type UserService interface {
 	UserSignUp(ctx context.Context, req *dto.SignUpRequest) (uuid.UUID, error)
 	UserSignIn(ctx context.Context, req *dto.SignInRequest) (string, error)
-	UserGetByID(ctx context.Context, userID uuid.UUID) (*dto.UserResponse, error)
+	UserGetByID(ctx context.Context, id uuid.UUID) (*dto.UserResponse, error)
+	UserSoftDelete(ctx context.Context, id uuid.UUID) error
 }
 
 type userService struct {
@@ -96,4 +97,13 @@ func (s *userService) UserGetByID(ctx context.Context, id uuid.UUID) (*dto.UserR
 	}
 
 	return mapper.ToUserResponseDTO(user), nil
+}
+
+func (s *userService) UserSoftDelete(ctx context.Context, id uuid.UUID) error {
+	err := s.repo.UserSoftDelete(ctx, id)
+	if err != nil {
+		return fmt.Errorf("Failed to delete user: %w", err)
+	}
+
+	return nil
 }

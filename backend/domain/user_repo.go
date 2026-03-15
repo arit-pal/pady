@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"errors"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -116,4 +117,22 @@ func (r *userRepo) GetUserByID(ctx context.Context, id uuid.UUID) (*User, error)
 	}
 
 	return user, nil
+}
+
+func (r *userRepo) UserSoftDelete(ctx context.Context, id uuid.UUID) error {
+	query := `
+		UPDATE users
+		SET status = 'deleted', updated_at = NOW(), deleted_at = NOW()
+		WHERE id = $1 AND status = 'active'
+	`
+	resp, err := r.pool.Exec(ctx, query, id)
+	if err != nil {
+		return err
+	}
+
+	if resp.RowsAffected() == 0 {
+		return errors.New("User not found or already deleted")
+	}
+
+	return nil
 }
