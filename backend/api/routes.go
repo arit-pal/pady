@@ -36,6 +36,7 @@ func NewRouter(dbPool *pgxpool.Pool) http.Handler {
 	documentHandler := handlers.NewDocumentHandler(documentService)
 
 	mux.HandleFunc("POST /api/v1/documents", middleware.RequireAuth(documentHandler.CreateDocument))
+	mux.HandleFunc("GET /api/v1/documents", middleware.RequireAuth(documentHandler.GetMyDocuments))
 
 	return c.Handler(mux)
 }

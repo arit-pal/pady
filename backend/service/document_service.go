@@ -12,6 +12,7 @@ import (
 
 type DocumentService interface {
 	CreateDocument(ctx context.Context, req *dto.CreateDocumentRequest, userID uuid.UUID) (*dto.DocumentResponse, error)
+	GetDocumentsByUserID(ctx context.Context, userID uuid.UUID, filter *dto.DocumentFilterDTO) ([]*dto.DocumentResponse, int, error)
 }
 
 type documentService struct {
@@ -33,4 +34,13 @@ func (s *documentService) CreateDocument(ctx context.Context, req *dto.CreateDoc
 	}
 
 	return mapper.ToDocumentResponseDTO(doc), nil
+}
+
+func (s *documentService) GetDocumentsByUserID(ctx context.Context, userID uuid.UUID, filter *dto.DocumentFilterDTO) ([]*dto.DocumentResponse, int, error) {
+	docs, totalCount, err := s.repo.GetDocumentsByUserID(ctx, userID, filter)
+	if err != nil {
+		return nil, 0, fmt.Errorf("Failed to retrieve documents: %w", err)
+	}
+
+	return mapper.ToDocumentResponseDTOs(docs), totalCount, nil
 }

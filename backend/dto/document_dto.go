@@ -26,3 +26,15 @@ type CreateDocumentResponse struct {
 	Document *DocumentResponse `json:"document"`
 	Message  string            `json:"message"`
 }
+
+type DocumentFilterDTO struct {
+	SearchKey string `json:"search_key"`
+	Size      int    `json:"size"`
+	Page      int    `json:"page"`
+}
+
+type GetDocumentsResponse struct {
+	TotalCount int                 `json:"total_count"`
+	Documents  []*DocumentResponse `json:"documents"`
+	Message    string              `json:"message"`
+}

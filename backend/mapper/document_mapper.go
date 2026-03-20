@@ -37,3 +37,11 @@ func ToDocumentResponseDTO(doc *domain.Document) *dto.DocumentResponse {
 		UpdatedAt:  doc.UpdatedAt,
 	}
 }
+
+func ToDocumentResponseDTOs(docs []*domain.Document) []*dto.DocumentResponse {
+	var responses []*dto.DocumentResponse
+	for _, doc := range docs {
+		responses = append(responses, ToDocumentResponseDTO(doc))
+	}
+	return responses
+}

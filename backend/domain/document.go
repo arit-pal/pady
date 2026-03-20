@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"arit-pal/pady/dto"
 	"context"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 
 type DocumentRepository interface {
 	CreateDocument(ctx context.Context, doc *Document) error
+	GetDocumentsByUserID(ctx context.Context, userID uuid.UUID, filter *dto.DocumentFilterDTO) ([]*Document, int, error)
 }
 
 type Document struct {
