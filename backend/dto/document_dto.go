@@ -7,11 +7,6 @@ import (
 	"github.com/google/uuid"
 )
 
-type CreateDocumentRequest struct {
-	Title    string          `json:"title"`
-	Metadata json.RawMessage `json:"metadata"`
-}
-
 type DocumentResponse struct {
 	ID         uuid.UUID       `json:"id"`
 	UserID     uuid.UUID       `json:"user_id"`
@@ -20,6 +15,11 @@ type DocumentResponse struct {
 	Visibility string          `json:"visibility"`
 	CreatedAt  time.Time       `json:"created_at"`
 	UpdatedAt  time.Time       `json:"updated_at"`
+}
+
+type CreateDocumentRequest struct {
+	Title    string          `json:"title"`
+	Metadata json.RawMessage `json:"metadata"`
 }
 
 type CreateDocumentResponse struct {
@@ -37,4 +37,20 @@ type GetDocumentsResponse struct {
 	TotalCount int                 `json:"total_count"`
 	Documents  []*DocumentResponse `json:"documents"`
 	Message    string              `json:"message"`
+}
+
+type GetDocumentResponse struct {
+	Document *DocumentResponse `json:"document"`
+	Message  string            `json:"message"`
+}
+
+type UpdateDocumentRequest struct {
+	Title      string          `json:"title"`
+	Metadata   json.RawMessage `json:"metadata"`
+	Visibility string          `json:"visibility"`
+}
+
+type UpdateDocumentResponse struct {
+	Document *DocumentResponse `json:"document"`
+	Message  string            `json:"message"`
 }

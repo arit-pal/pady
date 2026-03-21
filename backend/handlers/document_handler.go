@@ -38,7 +38,7 @@ func (h *documentHandler) CreateDocument(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	docRes, err := h.documentService.CreateDocument(r.Context(), &req, userID)
+	doc, err := h.documentService.CreateDocument(r.Context(), &req, userID)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
@@ -47,7 +47,7 @@ func (h *documentHandler) CreateDocument(w http.ResponseWriter, r *http.Request)
 
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(dto.CreateDocumentResponse{
-		Document: docRes,
+		Document: doc,
 		Message:  "Document created successfully",
 	})
 }
@@ -100,5 +100,104 @@ func (h *documentHandler) GetMyDocuments(w http.ResponseWriter, r *http.Request)
 		TotalCount: totalCount,
 		Documents:  docs,
 		Message:    "Documents retrieved successfully",
+	})
+}
+
+func (h *documentHandler) GetDocumentByID(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	userID, ok := r.Context().Value(middleware.IDKey).(uuid.UUID)
+	if !ok {
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Unauthorized: Invalid user ID in context"})
+		return
+	}
+
+	docID, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid document ID format"})
+		return
+	}
+
+	doc, err := h.documentService.GetDocumentByID(r.Context(), docID, userID)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(dto.GetDocumentResponse{
+		Document: doc,
+		Message:  "Document retrieved successfully",
+	})
+}
+
+func (h *documentHandler) UpdateDocument(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	userID, ok := r.Context().Value(middleware.IDKey).(uuid.UUID)
+	if !ok {
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Unauthorized: Invalid user ID in context"})
+		return
+	}
+
+	docID, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid document ID format"})
+		return
+	}
+
+	var req dto.UpdateDocumentRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid JSON payload"})
+		return
+	}
+
+	doc, err := h.documentService.UpdateDocument(r.Context(), docID, &req, userID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(dto.UpdateDocumentResponse{
+		Document: doc,
+		Message:  "Document updated successfully",
+	})
+}
+
+func (h *documentHandler) DeleteDocument(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	userID, ok := r.Context().Value(middleware.IDKey).(uuid.UUID)
+	if !ok {
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Unauthorized: Invalid user ID in context"})
+		return
+	}
+
+	docID, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid document ID format"})
+		return
+	}
+
+	err = h.documentService.DeleteDocument(r.Context(), docID, userID)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{
+		"message": "Document has been successfully deleted",
 	})
 }

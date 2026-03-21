@@ -3,6 +3,7 @@ package domain
 import (
 	"arit-pal/pady/dto"
 	"context"
+	"errors"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -102,4 +103,74 @@ func (r *documentRepo) GetDocumentsByUserID(ctx context.Context, userID uuid.UUI
 	}
 
 	return docs, totalCount, nil
+}
+
+func (r *documentRepo) GetDocumentByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*Document, error) {
+	query := `
+		SELECT id, user_id, title, metadata, visibility, created_at, updated_at
+		FROM documents
+		WHERE id = $1 AND user_id = $2
+	`
+	doc := &Document{}
+	err := r.pool.QueryRow(
+		ctx,
+		query,
+		id,
+		userID,
+	).Scan(
+		&doc.ID,
+		&doc.UserID,
+		&doc.Title,
+		&doc.Metadata,
+		&doc.Visibility,
+		&doc.CreatedAt,
+		&doc.UpdatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return doc, nil
+}
+
+func (r *documentRepo) UpdateDocument(ctx context.Context, doc *Document) error {
+	query := `
+		UPDATE documents
+		SET title = $1, metadata = $2, visibility = $3, updated_at = NOW()
+		WHERE id = $4 AND user_id = $5
+		RETURNING updated_at
+	`
+	err := r.pool.QueryRow(
+		ctx,
+		query,
+		doc.Title,
+		doc.Metadata,
+		doc.Visibility,
+		doc.ID,
+		doc.UserID,
+	).Scan(
+		&doc.UpdatedAt,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *documentRepo) DeleteDocument(ctx context.Context, id uuid.UUID, userID uuid.UUID) error {
+	query := `
+		DELETE FROM documents
+		WHERE id = $1 AND user_id = $2
+	`
+	resp, err := r.pool.Exec(ctx, query, id, userID)
+	if err != nil {
+		return err
+	}
+
+	if resp.RowsAffected() == 0 {
+		return errors.New("Document not found or you do not have permission to delete it")
+	}
+
+	return nil
 }

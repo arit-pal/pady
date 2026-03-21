@@ -11,6 +11,9 @@ import (
 type DocumentRepository interface {
 	CreateDocument(ctx context.Context, doc *Document) error
 	GetDocumentsByUserID(ctx context.Context, userID uuid.UUID, filter *dto.DocumentFilterDTO) ([]*Document, int, error)
+	GetDocumentByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*Document, error)
+	UpdateDocument(ctx context.Context, doc *Document) error
+	DeleteDocument(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
 }
 
 type Document struct {
