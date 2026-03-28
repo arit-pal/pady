@@ -36,68 +36,83 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-      <div style={{ width: '100%', maxWidth: '400px', padding: '40px 30px', background: '#ffffff', borderRadius: '12px', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
+    <div className="flex flex-col min-h-screen page-transition">
+      <main className="flex-grow flex items-center justify-center px-6 py-12 relative z-10">
+        <div className="w-full max-w-[420px] flex flex-col items-center">
 
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '30px', gap: '10px' }}>
-          <svg viewBox="0 0 24 24" width="36" height="36" stroke="#007BFF" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-            <polyline points="14 2 14 8 20 8"></polyline>
-            <line x1="16" y1="13" x2="8" y2="13"></line>
-            <line x1="16" y1="17" x2="8" y2="17"></line>
-            <polyline points="10 9 9 9 8 9"></polyline>
-          </svg>
-          <h1 style={{ fontSize: '28px', margin: 0, color: '#111827' }}>Pady</h1>
+          <div className="mb-10 flex flex-col items-center text-center">
+            <div className="w-16 h-16 bg-gradient-to-br from-primary to-primary-dim rounded-2xl shadow-xl flex items-center justify-center mb-6 transform -rotate-6 hover:rotate-0 transition-transform duration-500">
+              <span className="material-symbols-outlined text-on-primary text-3xl">draw</span>
+            </div>
+            <h1 className="font-headline text-5xl font-extrabold tracking-tighter text-on-surface mb-4">Pady</h1>
+            <span className="text-on-surface-variant font-medium tracking-wide bg-surface-container-high px-4 py-1.5 rounded-full text-xs uppercase">
+              Focus on ideas, we handle the rest
+            </span>
+          </div>
+
+          <div className="w-full bg-surface-container-lowest rounded-2xl p-8 sm:p-10 shadow-[0_40px_60px_-5px_rgba(45,51,56,0.04)] ring-1 ring-surface-container-highest/50 relative overflow-hidden">
+            <header className="mb-8">
+              <h2 className="font-headline text-2xl font-bold text-on-surface tracking-tight">Welcome back</h2>
+              <p className="text-on-surface-variant text-sm mt-1">Please enter your details to sign in.</p>
+            </header>
+
+            {error && <div className="bg-error-container text-on-error-container p-3 rounded-xl mb-6 text-sm font-medium text-center">{error}</div>}
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <label className="block text-xs font-bold uppercase tracking-widest text-on-surface-variant ml-1" htmlFor="email">Email Address</label>
+                <input
+                  className="w-full bg-surface-container-low border-none rounded-xl py-4 px-4 text-on-surface placeholder:text-outline-variant focus:ring-2 focus:ring-primary/20 focus:bg-surface-container-lowest transition-all duration-200 outline-none font-medium"
+                  id="email" type="email" placeholder="name@company.com" required
+                  value={email} onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex justify-between items-center ml-1">
+                  <label className="block text-xs font-bold uppercase tracking-widest text-on-surface-variant" htmlFor="password">Password</label>
+                </div>
+                <div className="relative group">
+                  <input
+                    className="w-full bg-surface-container-low border-none rounded-xl py-4 px-4 pr-12 text-on-surface placeholder:text-outline-variant focus:ring-2 focus:ring-primary/20 focus:bg-surface-container-lowest transition-all duration-200 outline-none font-medium"
+                    id="password" type={showPassword ? 'text' : 'password'} placeholder="••••••••" required
+                    value={password} onChange={(e) => setPassword(e.target.value)}
+                  />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-primary transition-colors">
+                    <span className="material-symbols-outlined text-[20px]">{showPassword ? 'visibility_off' : 'visibility'}</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="pt-4">
+                <button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-primary to-primary-dim text-on-primary font-bold py-4 rounded-xl shadow-lg shadow-primary/10 hover:shadow-xl hover:shadow-primary/25 hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed">
+                  {loading ? 'Signing in...' : 'Sign In'}
+                </button>
+              </div>
+            </form>
+
+            <p className="mt-8 text-center text-on-surface-variant text-sm font-medium">
+              Don't have an account?
+              <Link to="/signup" className="text-on-surface font-bold hover:text-primary hover:underline decoration-primary/30 underline-offset-4 ml-1 transition-all">Sign Up</Link>
+            </p>
+          </div>
         </div>
+      </main>
 
-        <h2 style={{ textAlign: 'center', marginBottom: '20px', fontSize: '20px', color: '#4B5563' }}>Welcome back</h2>
-
-        {error && <div style={{ background: '#FEE2E2', color: '#B91C1C', padding: '10px', borderRadius: '6px', marginBottom: '15px', fontSize: '14px', textAlign: 'center' }}>{error}</div>}
-
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div>
-            <input
-              type="email"
-              placeholder="Email address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              style={{ width: '100%', padding: '12px 14px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '15px', outline: 'none' }}
-            />
-          </div>
-
-          <div style={{ position: 'relative' }}>
-            <input
-              type={showPassword ? 'text' : 'password'}
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              style={{ width: '100%', padding: '12px 14px', paddingRight: '45px', border: '1px solid #D1D5DB', borderRadius: '8px', fontSize: '15px', outline: 'none' }}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#6B7280', display: 'flex', padding: 0 }}
-              aria-label={showPassword ? "Hide password" : "Show password"}
-            >
-              {showPassword ? (
-                <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
-              ) : (
-                <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-              )}
-            </button>
-          </div>
-
-          <button type="submit" disabled={loading} style={{ width: '100%', padding: '12px', background: '#007BFF', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '16px', fontWeight: 'bold', cursor: loading ? 'not-allowed' : 'pointer', marginTop: '10px', opacity: loading ? 0.7 : 1 }}>
-            {loading ? 'Signing in...' : 'Sign In'}
-          </button>
-        </form>
-
-        <p style={{ marginTop: '24px', textAlign: 'center', fontSize: '14px', color: '#6B7280' }}>
-          Don't have an account? <Link to="/signup" style={{ color: '#007BFF', fontWeight: '500' }}>Sign up</Link>
-        </p>
+      <div className="fixed bottom-0 left-0 w-full h-1/2 z-0 pointer-events-none overflow-hidden">
+        <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[60%] rounded-full bg-tertiary-fixed opacity-10 blur-[120px]"></div>
+        <div className="absolute bottom-[5%] right-[-5%] w-[30%] h-[40%] rounded-full bg-primary-fixed opacity-20 blur-[100px]"></div>
       </div>
+
+      <footer className="py-8 px-12 text-center relative z-10">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-xs font-bold text-outline-variant uppercase tracking-widest">
+          <div>© 2026 Pady Inc.</div>
+          <div className="flex gap-8">
+            <Link to="/privacy" className="hover:text-on-surface transition-colors">Privacy</Link>
+            <Link to="/terms" className="hover:text-on-surface transition-colors">Terms</Link>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
