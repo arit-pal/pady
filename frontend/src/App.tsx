@@ -4,6 +4,7 @@ import { AuthProvider } from './context/AuthProvider';
 import Login from './pages/Login';
 import SignUp from './pages/SignUp';
 import Dashboard from './pages/Dashboard';
+import Editor from './pages/Editor';
 import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
 import { useAuth } from './context/Auth';
@@ -29,6 +30,12 @@ const App: React.FC = () => {
           <Route path="/dashboard" element={
             <ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/document/:id" element={
+            <ProtectedRoute>
+              <Editor />
             </ProtectedRoute>
           } />
 
