@@ -78,8 +78,11 @@ func (h *documentHandler) GetMyDocuments(w http.ResponseWriter, r *http.Request)
 	searchParam := r.URL.Query().Get("searchKey")
 	searchKey := "%" + searchParam + "%"
 
+	sortBy := r.URL.Query().Get("sortBy")
+
 	filter := &dto.DocumentFilterDTO{
 		SearchKey: searchKey,
+		SortBy:    sortBy,
 		Size:      size,
 		Page:      (page - 1) * size,
 	}

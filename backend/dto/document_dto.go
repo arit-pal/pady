@@ -29,6 +29,7 @@ type CreateDocumentResponse struct {
 
 type DocumentFilterDTO struct {
 	SearchKey string `json:"search_key"`
+	SortBy    string `json:"sort_by"`
 	Size      int    `json:"size"`
 	Page      int    `json:"page"`
 }

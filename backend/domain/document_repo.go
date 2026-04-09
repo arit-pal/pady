@@ -64,14 +64,16 @@ func (r *documentRepo) GetDocumentsByUserID(ctx context.Context, userID uuid.UUI
 		SELECT id, user_id, title, metadata, visibility, created_at, updated_at 
 		FROM documents 
 		WHERE user_id = $1 AND title ILIKE $2
-		ORDER BY updated_at DESC 
-		LIMIT $3 OFFSET $4
+		ORDER BY
+			CASE WHEN $3 = 'updated_at' THEN updated_at ELSE created_at END DESC
+		LIMIT $4 OFFSET $5
 	`
 	rows, err := r.pool.Query(
 		ctx,
 		selectQuery,
 		userID,
 		filter.SearchKey,
+		filter.SortBy,
 		filter.Size,
 		filter.Page,
 	)

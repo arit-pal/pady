@@ -1,8 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/Auth';
 import { apiClient } from '../api/Api';
 import type { Document } from '../models/Models';
+
+const TAB_API_CONFIG: Record<string, { sortBy: string }> = {
+  documents: { sortBy: 'created_at' },
+  recent: { sortBy: 'updated_at' },
+  shared: { sortBy: 'created_at' },
+  starred: { sortBy: 'created_at' },
+};
+
+type TabType = 'documents' | 'shared' | 'recent' | 'starred';
 
 const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
@@ -13,8 +22,12 @@ const Dashboard: React.FC = () => {
 
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [isExpanded, setIsExpanded] = useState(
+    sessionStorage.getItem('pady_isExpanded') === 'true'
+  );
+  const [currentPage, setCurrentPage] = useState(
+    Number(sessionStorage.getItem('pady_currentPage')) || 1
+  );
   const [totalCount, setTotalCount] = useState(0);
 
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
@@ -26,10 +39,30 @@ const Dashboard: React.FC = () => {
   const [renameData, setRenameData] = useState({ isOpen: false, docId: '', title: '' });
   const [confirmData, setConfirmData] = useState<{ isOpen: boolean; type: 'profile' | 'document' | null; docId: string }>({ isOpen: false, type: null, docId: '' });
 
-  const [activeTab, setActiveTab] = useState<'documents' | 'shared' | 'recent' | 'starred'>('documents');
+  const [activeTab, setActiveTab] = useState<TabType>(
+    (sessionStorage.getItem('pady_activeTab') as TabType) || 'documents'
+  );
 
-  const limit = activeTab === 'documents' && !isExpanded ? 3 : 10;
+  let limit = 10;
+  if (activeTab === 'recent') {
+    limit = 20;
+  } else if (activeTab === 'documents' && !isExpanded) {
+    limit = 3;
+  }
+
   const totalPages = Math.ceil(totalCount / limit) || 1;
+
+  useEffect(() => {
+    sessionStorage.setItem('pady_activeTab', activeTab);
+  }, [activeTab]);
+
+  useEffect(() => {
+    sessionStorage.setItem('pady_currentPage', String(currentPage));
+  }, [currentPage]);
+
+  useEffect(() => {
+    sessionStorage.setItem('pady_isExpanded', String(isExpanded));
+  }, [isExpanded]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -39,7 +72,12 @@ const Dashboard: React.FC = () => {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+  const isFirstRender = useRef(true);
   useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
     setCurrentPage(1);
     setIsExpanded(false);
   }, [activeTab]);
@@ -48,7 +86,8 @@ const Dashboard: React.FC = () => {
     const fetchDocuments = async () => {
       setLoading(true);
       try {
-        const response = await apiClient.get<{ documents: Document[], total_count: number }>(`/documents?page=${currentPage}&size=${limit}&searchKey=${encodeURIComponent(debouncedSearchQuery)}`);
+        const { sortBy } = TAB_API_CONFIG[activeTab];
+        const response = await apiClient.get<{ documents: Document[], total_count: number }>(`/documents?page=${currentPage}&size=${limit}&searchKey=${encodeURIComponent(debouncedSearchQuery)}&sortBy=${sortBy}`);
         setDocuments(response.data.documents || []);
         setTotalCount(response.data.total_count || 0);
       } catch (err) {
@@ -403,27 +442,49 @@ const Dashboard: React.FC = () => {
                   </div>
                 )}
 
-                {(activeTab !== 'documents' || isExpanded) && totalPages > 1 && (
-                  <div className="p-4 border-t border-outline-variant/5 flex justify-between items-center bg-surface-container-lowest rounded-b-2xl">
-                    <button
-                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                      disabled={currentPage === 1}
-                      className="text-sm font-semibold text-on-surface-variant hover:text-on-surface disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 py-2 px-4 rounded-lg hover:bg-surface-container-low transition-all active:scale-95 outline-none"
-                    >
-                      <span className="material-symbols-outlined text-[18px]">chevron_left</span> Previous
-                    </button>
+                {(activeTab !== 'documents' || isExpanded) && (
+                  (activeTab !== 'recent' && totalPages > 1) || (activeTab === 'recent' && totalCount > 20)
+                ) && (
+                  <div className="p-4 border-t border-outline-variant/5 flex flex-col gap-3 bg-surface-container-lowest rounded-b-2xl">
+                    {activeTab !== 'recent' && totalPages > 1 && (
+                      <div className="flex justify-between items-center w-full">
+                        <button
+                          onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                          disabled={currentPage === 1}
+                          className="text-sm font-semibold text-on-surface-variant hover:text-on-surface disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 py-2 px-4 rounded-lg hover:bg-surface-container-low transition-all active:scale-95 outline-none"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">chevron_left</span> Previous
+                        </button>
 
-                    <span className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">
-                      Page {currentPage} of {totalPages}
-                    </span>
+                        <span className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">
+                          Page {currentPage} of {totalPages}
+                        </span>
 
-                    <button
-                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                      disabled={currentPage === totalPages}
-                      className="text-sm font-semibold text-on-surface-variant hover:text-on-surface disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 py-2 px-4 rounded-lg hover:bg-surface-container-low transition-all active:scale-95 outline-none"
-                    >
-                      Next <span className="material-symbols-outlined text-[18px]">chevron_right</span>
-                    </button>
+                        <button
+                          onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                          disabled={currentPage === totalPages}
+                          className="text-sm font-semibold text-on-surface-variant hover:text-on-surface disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 py-2 px-4 rounded-lg hover:bg-surface-container-low transition-all active:scale-95 outline-none"
+                        >
+                          Next <span className="material-symbols-outlined text-[18px]">chevron_right</span>
+                        </button>
+                      </div>
+                    )}
+
+                    {activeTab === 'recent' && totalCount > 20 && (
+                      <div className="flex justify-center items-center text-sm font-medium text-on-surface-variant">
+                        No more recent documents. 
+                        <button 
+                          onClick={() => { 
+                            setActiveTab('documents'); 
+                            setIsExpanded(true); 
+                            setCurrentPage(1); 
+                          }} 
+                          className="text-primary hover:text-primary-dim font-bold transition-colors ml-1.5 outline-none hover:underline"
+                        >
+                          Visit all documents
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
