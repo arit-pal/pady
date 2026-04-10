@@ -13,6 +13,7 @@ export interface Document {
   title: string;
   metadata: Record<string, unknown>;
   visibility: string;
+  is_starred: boolean;
   created_at: string;
   updated_at: string;
 }

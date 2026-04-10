@@ -4,11 +4,11 @@ import { useAuth } from '../context/Auth';
 import { apiClient } from '../api/Api';
 import type { Document } from '../models/Models';
 
-const TAB_API_CONFIG: Record<string, { sortBy: string }> = {
+const TAB_API_CONFIG: Record<string, { sortBy: string; starred?: boolean }> = {
   documents: { sortBy: 'created_at' },
   recent: { sortBy: 'updated_at' },
   shared: { sortBy: 'created_at' },
-  starred: { sortBy: 'created_at' },
+  starred: { sortBy: 'created_at', starred: true },
 };
 
 type TabType = 'documents' | 'shared' | 'recent' | 'starred';
@@ -86,8 +86,10 @@ const Dashboard: React.FC = () => {
     const fetchDocuments = async () => {
       setLoading(true);
       try {
-        const { sortBy } = TAB_API_CONFIG[activeTab];
-        const response = await apiClient.get<{ documents: Document[], total_count: number }>(`/documents?page=${currentPage}&size=${limit}&searchKey=${encodeURIComponent(debouncedSearchQuery)}&sortBy=${sortBy}`);
+        const { sortBy, starred } = TAB_API_CONFIG[activeTab];
+        const response = await apiClient.get<{ documents: Document[], total_count: number }>(
+          `/documents?page=${currentPage}&size=${limit}&searchKey=${encodeURIComponent(debouncedSearchQuery)}&sortBy=${sortBy}&is_starred=${starred}`
+        );
         setDocuments(response.data.documents || []);
         setTotalCount(response.data.total_count || 0);
       } catch (err) {
@@ -149,6 +151,17 @@ const Dashboard: React.FC = () => {
     } catch (err) {
       console.error(err);
       setError('Failed to update visibility.');
+    }
+  };
+
+  const handleToggleStar = async (doc: Document) => {
+    setOpenMenuId(null);
+    try {
+      await apiClient.put(`/documents/${doc.id}`, { is_starred: !doc.is_starred });
+      window.location.reload();
+    } catch (err) {
+      console.error(err);
+      setError('Failed to update starred status.');
     }
   };
 
@@ -218,7 +231,7 @@ const Dashboard: React.FC = () => {
               <button
                 onClick={openDeleteProfileModal}
                 disabled={isDeletingProfile}
-                className="w-full text-left px-3 py-1.5 text-xs font-medium text-error hover:bg-error-container/20 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full text-left px-3 py-1.5 text-xs font-medium text-error hover:bg-error-container/20 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
               >
                 <span className="material-symbols-outlined text-[15px]">
                   {isDeletingProfile ? 'hourglass_empty' : 'delete_forever'}
@@ -358,7 +371,9 @@ const Dashboard: React.FC = () => {
                                 <span className="material-symbols-outlined">article</span>
                               </div>
                               <div>
-                                <p className="font-semibold text-on-surface">{doc.title}</p>
+                                <p className="font-semibold text-on-surface">
+                                  {doc.title}
+                                </p>
                               </div>
                             </div>
                           </td>
@@ -386,19 +401,19 @@ const Dashboard: React.FC = () => {
 
                             {openMenuId === doc.id && (
                               <div
-                                className="absolute right-8 bottom-12 mb-1 w-44 bg-surface-container-lowest border border-outline-variant/20 rounded-xl shadow-[0_-8px_30px_rgba(0,0,0,0.12)] py-2 z-[100] animate-in fade-in slide-in-from-bottom-2 duration-200"
+                                className="absolute right-8 bottom-12 mb-1 w-48 bg-surface-container-lowest border border-outline-variant/20 rounded-xl shadow-[0_-8px_30px_rgba(0,0,0,0.12)] py-2 z-[100] animate-in fade-in slide-in-from-bottom-2 duration-200"
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 <button
                                   onClick={() => openRenameModal(doc)}
-                                  className="w-full text-left px-4 py-2 text-sm font-medium text-on-surface hover:bg-surface-container-low transition-colors flex items-center gap-3 outline-none"
+                                  className="w-full text-left px-4 py-2 text-sm font-medium text-on-surface hover:bg-surface-container-low transition-colors flex items-center gap-3 outline-none whitespace-nowrap"
                                 >
                                   <span className="material-symbols-outlined text-[18px]">edit</span>
                                   Rename
                                 </button>
                                 <button
                                   onClick={() => handleToggleVisibility(doc)}
-                                  className="w-full text-left px-4 py-2 text-sm font-medium text-on-surface hover:bg-surface-container-low transition-colors flex items-center gap-3 outline-none"
+                                  className="w-full text-left px-4 py-2 text-sm font-medium text-on-surface hover:bg-surface-container-low transition-colors flex items-center gap-3 outline-none whitespace-nowrap"
                                 >
                                   <span className="material-symbols-outlined text-[18px]">
                                     {doc.visibility === 'private' ? 'public' : 'lock'}
@@ -406,15 +421,15 @@ const Dashboard: React.FC = () => {
                                   Make {doc.visibility === 'private' ? 'Public' : 'Private'}
                                 </button>
                                 <button
-                                  onClick={() => { setOpenMenuId(null); }}
-                                  className="w-full text-left px-4 py-2 text-sm font-medium text-on-surface hover:bg-surface-container-low transition-colors flex items-center gap-3 outline-none"
+                                  onClick={() => handleToggleStar(doc)}
+                                  className="w-full text-left px-4 py-2 text-sm font-medium text-on-surface hover:bg-surface-container-low transition-colors flex items-center gap-3 outline-none whitespace-nowrap"
                                 >
-                                  <span className="material-symbols-outlined text-[18px]">star</span>
-                                  Star Document
+                                  <span className="material-symbols-outlined text-[18px]" style={doc.is_starred ? { fontVariationSettings: "'FILL' 1" } : {}}>star</span>
+                                  {doc.is_starred ? 'Unstar Document' : 'Star Document'}
                                 </button>
                                 <button
                                   onClick={() => openDeleteDocModal(doc.id)}
-                                  className="w-full text-left px-4 py-1.5 text-[13px] font-medium text-error hover:bg-error-container/20 transition-colors flex items-center gap-3 outline-none"
+                                  className="w-full text-left px-4 py-1.5 text-[13px] font-medium text-error hover:bg-error-container/20 transition-colors flex items-center gap-3 outline-none whitespace-nowrap"
                                 >
                                   <span className="material-symbols-outlined text-[16px]">delete</span>
                                   Delete
@@ -445,48 +460,48 @@ const Dashboard: React.FC = () => {
                 {(activeTab !== 'documents' || isExpanded) && (
                   (activeTab !== 'recent' && totalPages > 1) || (activeTab === 'recent' && totalCount > 20)
                 ) && (
-                  <div className="p-4 border-t border-outline-variant/5 flex flex-col gap-3 bg-surface-container-lowest rounded-b-2xl">
-                    {activeTab !== 'recent' && totalPages > 1 && (
-                      <div className="flex justify-between items-center w-full">
-                        <button
-                          onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                          disabled={currentPage === 1}
-                          className="text-sm font-semibold text-on-surface-variant hover:text-on-surface disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 py-2 px-4 rounded-lg hover:bg-surface-container-low transition-all active:scale-95 outline-none"
-                        >
-                          <span className="material-symbols-outlined text-[18px]">chevron_left</span> Previous
-                        </button>
+                    <div className="p-4 border-t border-outline-variant/5 flex flex-col gap-3 bg-surface-container-lowest rounded-b-2xl">
+                      {activeTab !== 'recent' && totalPages > 1 && (
+                        <div className="flex justify-between items-center w-full">
+                          <button
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                            className="text-sm font-semibold text-on-surface-variant hover:text-on-surface disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 py-2 px-4 rounded-lg hover:bg-surface-container-low transition-all active:scale-95 outline-none"
+                          >
+                            <span className="material-symbols-outlined text-[18px]">chevron_left</span> Previous
+                          </button>
 
-                        <span className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">
-                          Page {currentPage} of {totalPages}
-                        </span>
+                          <span className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">
+                            Page {currentPage} of {totalPages}
+                          </span>
 
-                        <button
-                          onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                          disabled={currentPage === totalPages}
-                          className="text-sm font-semibold text-on-surface-variant hover:text-on-surface disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 py-2 px-4 rounded-lg hover:bg-surface-container-low transition-all active:scale-95 outline-none"
-                        >
-                          Next <span className="material-symbols-outlined text-[18px]">chevron_right</span>
-                        </button>
-                      </div>
-                    )}
+                          <button
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                            disabled={currentPage === totalPages}
+                            className="text-sm font-semibold text-on-surface-variant hover:text-on-surface disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 py-2 px-4 rounded-lg hover:bg-surface-container-low transition-all active:scale-95 outline-none"
+                          >
+                            Next <span className="material-symbols-outlined text-[18px]">chevron_right</span>
+                          </button>
+                        </div>
+                      )}
 
-                    {activeTab === 'recent' && totalCount > 20 && (
-                      <div className="flex justify-center items-center text-sm font-medium text-on-surface-variant">
-                        No more recent documents. 
-                        <button 
-                          onClick={() => { 
-                            setActiveTab('documents'); 
-                            setIsExpanded(true); 
-                            setCurrentPage(1); 
-                          }} 
-                          className="text-primary hover:text-primary-dim font-bold transition-colors ml-1.5 outline-none hover:underline"
-                        >
-                          Visit all documents
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
+                      {activeTab === 'recent' && totalCount > 20 && (
+                        <div className="flex justify-center items-center text-sm font-medium text-on-surface-variant">
+                          No more recent documents.
+                          <button
+                            onClick={() => {
+                              setActiveTab('documents');
+                              setIsExpanded(true);
+                              setCurrentPage(1);
+                            }}
+                            className="text-primary hover:text-primary-dim font-bold transition-colors ml-1.5 outline-none hover:underline"
+                          >
+                            Visit all documents
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
               </div>
             )}
           </section>
