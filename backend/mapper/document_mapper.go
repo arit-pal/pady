@@ -23,6 +23,7 @@ func ToDocumentDomain(req *dto.CreateDocumentRequest, userID uuid.UUID) *domain.
 		Title:      title,
 		Metadata:   metadata,
 		Visibility: "private",
+		IsStarred:  false,
 	}
 }
 
@@ -33,6 +34,7 @@ func ToDocumentResponseDTO(doc *domain.Document) *dto.DocumentResponse {
 		Title:      doc.Title,
 		Metadata:   doc.Metadata,
 		Visibility: doc.Visibility,
+		IsStarred:  doc.IsStarred,
 		CreatedAt:  doc.CreatedAt,
 		UpdatedAt:  doc.UpdatedAt,
 	}

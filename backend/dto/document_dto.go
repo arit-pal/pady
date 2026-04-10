@@ -13,6 +13,7 @@ type DocumentResponse struct {
 	Title      string          `json:"title"`
 	Metadata   json.RawMessage `json:"metadata"`
 	Visibility string          `json:"visibility"`
+	IsStarred  bool            `json:"is_starred"`
 	CreatedAt  time.Time       `json:"created_at"`
 	UpdatedAt  time.Time       `json:"updated_at"`
 }
@@ -30,6 +31,7 @@ type CreateDocumentResponse struct {
 type DocumentFilterDTO struct {
 	SearchKey string `json:"search_key"`
 	SortBy    string `json:"sort_by"`
+	IsStarred bool   `json:"is_starred"`
 	Size      int    `json:"size"`
 	Page      int    `json:"page"`
 }
@@ -49,6 +51,7 @@ type UpdateDocumentRequest struct {
 	Title      string          `json:"title"`
 	Metadata   json.RawMessage `json:"metadata"`
 	Visibility string          `json:"visibility"`
+	IsStarred  *bool           `json:"is_starred"`
 }
 
 type UpdateDocumentResponse struct {

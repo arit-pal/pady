@@ -22,6 +22,7 @@ type Document struct {
 	Title      string    `db:"title"`
 	Metadata   []byte    `db:"metadata"`
 	Visibility string    `db:"visibility"`
+	IsStarred  bool      `json:"is_starred"`
 	CreatedAt  time.Time `db:"created_at"`
 	UpdatedAt  time.Time `db:"updated_at"`
 }

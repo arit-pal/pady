@@ -80,9 +80,12 @@ func (h *documentHandler) GetMyDocuments(w http.ResponseWriter, r *http.Request)
 
 	sortBy := r.URL.Query().Get("sortBy")
 
+	isStarred := r.URL.Query().Get("is_starred") == "true"
+
 	filter := &dto.DocumentFilterDTO{
 		SearchKey: searchKey,
 		SortBy:    sortBy,
+		IsStarred: isStarred,
 		Size:      size,
 		Page:      (page - 1) * size,
 	}

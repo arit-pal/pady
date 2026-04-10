@@ -72,6 +72,9 @@ func (s *documentService) UpdateDocument(ctx context.Context, id uuid.UUID, req 
 	if req.Visibility != "" {
 		doc.Visibility = req.Visibility
 	}
+	if req.IsStarred != nil {
+		doc.IsStarred = *req.IsStarred
+	}
 
 	err = s.repo.UpdateDocument(ctx, doc)
 	if err != nil {

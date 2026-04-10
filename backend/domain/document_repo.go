@@ -21,8 +21,8 @@ func NewDocumentRepo(pool *pgxpool.Pool) DocumentRepository {
 
 func (r *documentRepo) CreateDocument(ctx context.Context, doc *Document) error {
 	query := `
-		INSERT INTO documents (user_id, title, metadata, visibility)
-		VALUES ($1, $2, $3, $4)
+		INSERT INTO documents (user_id, title, metadata, visibility, is_starred)
+		VALUES ($1, $2, $3, $4, $5)
 		RETURNING id, created_at, updated_at
 	`
 	err := r.pool.QueryRow(
@@ -32,6 +32,7 @@ func (r *documentRepo) CreateDocument(ctx context.Context, doc *Document) error 
 		doc.Title,
 		doc.Metadata,
 		doc.Visibility,
+		doc.IsStarred,
 	).Scan(
 		&doc.ID,
 		&doc.CreatedAt,
@@ -45,7 +46,7 @@ func (r *documentRepo) GetDocumentsByUserID(ctx context.Context, userID uuid.UUI
 	countQuery := `
 		SELECT COUNT(*) 
 		FROM documents 
-		WHERE user_id = $1 AND title ILIKE $2
+		WHERE user_id = $1 AND title ILIKE $2 AND (is_starred = true OR $3 = false)
 	`
 	var totalCount int
 	err := r.pool.QueryRow(
@@ -53,6 +54,7 @@ func (r *documentRepo) GetDocumentsByUserID(ctx context.Context, userID uuid.UUI
 		countQuery,
 		userID,
 		filter.SearchKey,
+		filter.IsStarred,
 	).Scan(
 		&totalCount,
 	)
@@ -61,18 +63,19 @@ func (r *documentRepo) GetDocumentsByUserID(ctx context.Context, userID uuid.UUI
 	}
 
 	selectQuery := `
-		SELECT id, user_id, title, metadata, visibility, created_at, updated_at 
+		SELECT id, user_id, title, metadata, visibility, is_starred, created_at, updated_at 
 		FROM documents 
-		WHERE user_id = $1 AND title ILIKE $2
+		WHERE user_id = $1 AND title ILIKE $2 AND (is_starred = true OR $3 = false)
 		ORDER BY
-			CASE WHEN $3 = 'updated_at' THEN updated_at ELSE created_at END DESC
-		LIMIT $4 OFFSET $5
+			CASE WHEN $4 = 'updated_at' THEN updated_at ELSE created_at END DESC
+		LIMIT $5 OFFSET $6
 	`
 	rows, err := r.pool.Query(
 		ctx,
 		selectQuery,
 		userID,
 		filter.SearchKey,
+		filter.IsStarred,
 		filter.SortBy,
 		filter.Size,
 		filter.Page,
@@ -91,6 +94,7 @@ func (r *documentRepo) GetDocumentsByUserID(ctx context.Context, userID uuid.UUI
 			&doc.Title,
 			&doc.Metadata,
 			&doc.Visibility,
+			&doc.IsStarred,
 			&doc.CreatedAt,
 			&doc.UpdatedAt,
 		)
@@ -109,7 +113,7 @@ func (r *documentRepo) GetDocumentsByUserID(ctx context.Context, userID uuid.UUI
 
 func (r *documentRepo) GetDocumentByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*Document, error) {
 	query := `
-		SELECT id, user_id, title, metadata, visibility, created_at, updated_at
+		SELECT id, user_id, title, metadata, visibility, is_starred, created_at, updated_at
 		FROM documents
 		WHERE id = $1 AND user_id = $2
 	`
@@ -125,6 +129,7 @@ func (r *documentRepo) GetDocumentByID(ctx context.Context, id uuid.UUID, userID
 		&doc.Title,
 		&doc.Metadata,
 		&doc.Visibility,
+		&doc.IsStarred,
 		&doc.CreatedAt,
 		&doc.UpdatedAt,
 	)
@@ -138,8 +143,8 @@ func (r *documentRepo) GetDocumentByID(ctx context.Context, id uuid.UUID, userID
 func (r *documentRepo) UpdateDocument(ctx context.Context, doc *Document) error {
 	query := `
 		UPDATE documents
-		SET title = $1, metadata = $2, visibility = $3, updated_at = NOW()
-		WHERE id = $4 AND user_id = $5
+		SET title = $1, metadata = $2, visibility = $3, is_starred = $4, updated_at = NOW()
+		WHERE id = $5 AND user_id = $6
 		RETURNING updated_at
 	`
 	err := r.pool.QueryRow(
@@ -148,6 +153,7 @@ func (r *documentRepo) UpdateDocument(ctx context.Context, doc *Document) error 
 		doc.Title,
 		doc.Metadata,
 		doc.Visibility,
+		doc.IsStarred,
 		doc.ID,
 		doc.UserID,
 	).Scan(
