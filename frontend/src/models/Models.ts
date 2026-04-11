@@ -14,8 +14,16 @@ export interface Document {
   metadata: Record<string, unknown>;
   visibility: string;
   is_starred: boolean;
+  permission: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface Collaborator {
+  user_id: string;
+  full_name: string;
+  email: string;
+  permission: string;
 }
 
 export interface AuthResponse {
