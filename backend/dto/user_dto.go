@@ -41,3 +41,14 @@ type GetMeResponse struct {
 	UserResponse *UserResponse `json:"user"`
 	Message      string        `json:"message"`
 }
+
+type SearchUserResponse struct {
+	ID       uuid.UUID `json:"id"`
+	FullName string    `json:"full_name"`
+	Email    string    `json:"email"`
+}
+
+type SearchUsersResponse struct {
+	Users   []*SearchUserResponse `json:"users"`
+	Message string                `json:"message"`
+}

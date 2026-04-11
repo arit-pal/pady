@@ -114,3 +114,34 @@ func (h *userHandler) UserSoftDelete(w http.ResponseWriter, r *http.Request) {
 		"message": "User account has been successfully deleted",
 	})
 }
+
+func (h *userHandler) SearchUsers(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	id, ok := r.Context().Value(middleware.IDKey).(uuid.UUID)
+	if !ok {
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Unauthorized: Invalid user ID in context"})
+		return
+	}
+
+	query := r.URL.Query().Get("email")
+	if query == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Search query 'email' is required"})
+		return
+	}
+
+	users, err := h.userService.SearchUsers(r.Context(), query, id)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(dto.SearchUsersResponse{
+		Users:   users,
+		Message: "Users retrieved successfully",
+	})
+}

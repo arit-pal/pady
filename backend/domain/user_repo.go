@@ -125,7 +125,11 @@ func (r *userRepo) UserSoftDelete(ctx context.Context, id uuid.UUID) error {
 		SET status = 'deleted', updated_at = NOW(), deleted_at = NOW()
 		WHERE id = $1 AND status = 'active'
 	`
-	resp, err := r.pool.Exec(ctx, query, id)
+	resp, err := r.pool.Exec(
+		ctx,
+		query,
+		id,
+	)
 	if err != nil {
 		return err
 	}
@@ -135,4 +139,45 @@ func (r *userRepo) UserSoftDelete(ctx context.Context, id uuid.UUID) error {
 	}
 
 	return nil
+}
+
+func (r *userRepo) SearchUsersByEmail(ctx context.Context, email string, id uuid.UUID) ([]*User, error) {
+	query := `
+		SELECT id, full_name, email
+		FROM users
+		WHERE email ILIKE $1 AND id != $2 AND status = 'active'
+		ORDER BY email ASC
+		LIMIT 5
+	`
+	email = "%" + email + "%"
+
+	rows, err := r.pool.Query(
+		ctx,
+		query,
+		email,
+		id,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []*User
+	for rows.Next() {
+		user := &User{}
+		if err := rows.Scan(
+			&user.ID,
+			&user.FullName,
+			&user.Email,
+		); err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return users, nil
 }

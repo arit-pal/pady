@@ -24,3 +24,19 @@ func ToUserResponseDTO(user *domain.User) *dto.UserResponse {
 		DeletedAt: user.DeletedAt,
 	}
 }
+
+func ToSearchUserResponseDTO(user *domain.User) *dto.SearchUserResponse {
+	return &dto.SearchUserResponse{
+		ID:       user.ID,
+		FullName: user.FullName,
+		Email:    user.Email,
+	}
+}
+
+func ToSearchUserResponseDTOs(users []*domain.User) []*dto.SearchUserResponse {
+	var responses []*dto.SearchUserResponse
+	for _, user := range users {
+		responses = append(responses, ToSearchUserResponseDTO(user))
+	}
+	return responses
+}

@@ -19,6 +19,7 @@ type UserService interface {
 	UserSignIn(ctx context.Context, req *dto.SignInRequest) (string, error)
 	UserGetByID(ctx context.Context, id uuid.UUID) (*dto.UserResponse, error)
 	UserSoftDelete(ctx context.Context, id uuid.UUID) error
+	SearchUsers(ctx context.Context, email string, id uuid.UUID) ([]*dto.SearchUserResponse, error)
 }
 
 type userService struct {
@@ -106,4 +107,19 @@ func (s *userService) UserSoftDelete(ctx context.Context, id uuid.UUID) error {
 	}
 
 	return nil
+}
+
+func (s *userService) SearchUsers(ctx context.Context, email string, id uuid.UUID) ([]*dto.SearchUserResponse, error) {
+	email = strings.TrimSpace(email)
+
+	if len(email) < 3 {
+		return nil, errors.New("Search query must be at least 3 characters long")
+	}
+
+	users, err := s.repo.SearchUsersByEmail(ctx, email, id)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to search users: %w", err)
+	}
+
+	return mapper.ToSearchUserResponseDTOs(users), nil
 }

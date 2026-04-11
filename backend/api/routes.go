@@ -30,6 +30,7 @@ func NewRouter(dbPool *pgxpool.Pool) http.Handler {
 	mux.HandleFunc("POST /api/v1/login", userHandler.UserSignIn)
 	mux.HandleFunc("GET /api/v1/me", middleware.RequireAuth(userHandler.UserGetMe))
 	mux.HandleFunc("DELETE /api/v1/delete", middleware.RequireAuth(userHandler.UserSoftDelete))
+	mux.HandleFunc("GET /api/v1/users/search", middleware.RequireAuth(userHandler.SearchUsers))
 
 	documentRepo := domain.NewDocumentRepo(dbPool)
 	documentService := service.NewDocumentService(documentRepo)

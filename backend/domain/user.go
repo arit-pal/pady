@@ -13,6 +13,7 @@ type UserRepository interface {
 	GetUserByEmail(ctx context.Context, email string) (*User, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (*User, error)
 	UserSoftDelete(ctx context.Context, id uuid.UUID) error
+	SearchUsersByEmail(ctx context.Context, email string, id uuid.UUID) ([]*User, error)
 }
 
 type User struct {
