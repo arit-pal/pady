@@ -68,7 +68,7 @@ type ShareDocumentRequest struct {
 
 type CollaboratorResponse struct {
 	UserID     uuid.UUID `json:"user_id"`
-	Name       string    `json:"name"`
+	FullName   string    `json:"full_name"`
 	Email      string    `json:"email"`
 	Permission string    `json:"permission"`
 }

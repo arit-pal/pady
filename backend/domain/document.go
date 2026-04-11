@@ -33,7 +33,7 @@ type Document struct {
 
 type Collaborator struct {
 	UserID     uuid.UUID `db:"user_id"`
-	Name       string    `db:"name"`
+	FullName   string    `db:"full_name"`
 	Email      string    `db:"email"`
 	Permission string    `db:"permission"`
 }

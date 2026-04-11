@@ -299,7 +299,7 @@ func (r *documentRepo) GetCollaborators(ctx context.Context, docID uuid.UUID, us
 		collaborator := &Collaborator{}
 		err := rows.Scan(
 			&collaborator.UserID,
-			&collaborator.Name,
+			&collaborator.FullName,
 			&collaborator.Email,
 			&collaborator.Permission,
 		)

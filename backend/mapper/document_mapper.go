@@ -53,7 +53,7 @@ func ToDocumentResponseDTOs(docs []*domain.Document) []*dto.DocumentResponse {
 func ToCollaboratorResponseDTO(collaborator *domain.Collaborator) *dto.CollaboratorResponse {
 	return &dto.CollaboratorResponse{
 		UserID:     collaborator.UserID,
-		Name:       collaborator.Name,
+		FullName:   collaborator.FullName,
 		Email:      collaborator.Email,
 		Permission: collaborator.Permission,
 	}
