@@ -65,3 +65,15 @@ type ShareDocumentRequest struct {
 	Emails     []string `json:"emails"`
 	Permission string   `json:"permission"`
 }
+
+type CollaboratorResponse struct {
+	UserID     uuid.UUID `json:"user_id"`
+	Name       string    `json:"name"`
+	Email      string    `json:"email"`
+	Permission string    `json:"permission"`
+}
+
+type GetCollaboratorsResponse struct {
+	Collaborators []*CollaboratorResponse `json:"collaborators"`
+	Message       string                  `json:"message"`
+}

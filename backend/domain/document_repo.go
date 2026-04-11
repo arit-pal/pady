@@ -256,3 +256,100 @@ func (r *documentRepo) ShareDocument(ctx context.Context, docID uuid.UUID, userI
 
 	return nil
 }
+
+func (r *documentRepo) GetCollaborators(ctx context.Context, docID uuid.UUID, userID uuid.UUID) ([]*Collaborator, error) {
+	var isOwner bool
+	checkQuery := `SELECT EXISTS(SELECT 1 FROM documents WHERE id = $1 AND user_id = $2)`
+
+	err := r.pool.QueryRow(
+		ctx,
+		checkQuery,
+		docID,
+		userID,
+	).Scan(
+		&isOwner,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if !isOwner {
+		return nil, errors.New("Access denied: only the document owner can view collaborators")
+	}
+
+	query := `
+		SELECT u.id, u.full_name, u.email, ds.permission
+		FROM document_shares ds
+		JOIN users u ON ds.user_id = u.id
+		WHERE ds.document_id = $1
+		ORDER BY ds.permission ASC, u.full_name ASC
+	`
+	rows, err := r.pool.Query(
+		ctx,
+		query,
+		docID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var collaborators []*Collaborator
+	for rows.Next() {
+		collaborator := &Collaborator{}
+		err := rows.Scan(
+			&collaborator.UserID,
+			&collaborator.Name,
+			&collaborator.Email,
+			&collaborator.Permission,
+		)
+		if err != nil {
+			return nil, err
+		}
+		collaborators = append(collaborators, collaborator)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return collaborators, nil
+}
+
+func (r *documentRepo) RemoveCollaborator(ctx context.Context, docID uuid.UUID, collaboratorID uuid.UUID, userID uuid.UUID) error {
+	var isOwner bool
+	checkQuery := `SELECT EXISTS(SELECT 1 FROM documents WHERE id = $1 AND user_id = $2)`
+
+	err := r.pool.QueryRow(
+		ctx,
+		checkQuery,
+		docID,
+		userID,
+	).Scan(
+		&isOwner,
+	)
+	if err != nil {
+		return err
+	}
+
+	if !isOwner {
+		return errors.New("Access denied: only the document owner can manage sharing")
+	}
+
+	query := `DELETE FROM document_shares WHERE document_id = $1 AND user_id = $2`
+	resp, err := r.pool.Exec(
+		ctx,
+		query,
+		docID,
+		collaboratorID,
+	)
+	if err != nil {
+		return err
+	}
+
+	if resp.RowsAffected() == 0 {
+		return errors.New("Collaborator not found or already removed")
+	}
+
+	return nil
+}

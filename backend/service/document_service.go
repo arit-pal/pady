@@ -18,6 +18,8 @@ type DocumentService interface {
 	UpdateDocument(ctx context.Context, id uuid.UUID, req *dto.UpdateDocumentRequest, userID uuid.UUID) (*dto.DocumentResponse, error)
 	DeleteDocument(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
 	ShareDocument(ctx context.Context, docID uuid.UUID, userID uuid.UUID, req *dto.ShareDocumentRequest) error
+	GetCollaborators(ctx context.Context, docID uuid.UUID, userID uuid.UUID) ([]*dto.CollaboratorResponse, error)
+	RemoveCollaborator(ctx context.Context, docID uuid.UUID, collaboratorID uuid.UUID, userID uuid.UUID) error
 }
 
 type documentService struct {
@@ -112,6 +114,24 @@ func (s *documentService) ShareDocument(ctx context.Context, docID uuid.UUID, us
 	err := s.repo.ShareDocument(ctx, docID, userID, req.Emails, permission)
 	if err != nil {
 		return fmt.Errorf("Failed to share document: %w", err)
+	}
+
+	return nil
+}
+
+func (s *documentService) GetCollaborators(ctx context.Context, docID uuid.UUID, userID uuid.UUID) ([]*dto.CollaboratorResponse, error) {
+	collaborators, err := s.repo.GetCollaborators(ctx, docID, userID)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to retrieve collaborators: %w", err)
+	}
+
+	return mapper.ToCollaboratorResponseDTOs(collaborators), nil
+}
+
+func (s *documentService) RemoveCollaborator(ctx context.Context, docID uuid.UUID, collaboratorID uuid.UUID, userID uuid.UUID) error {
+	err := s.repo.RemoveCollaborator(ctx, docID, collaboratorID, userID)
+	if err != nil {
+		return fmt.Errorf("Failed to remove collaborator: %w", err)
 	}
 
 	return nil

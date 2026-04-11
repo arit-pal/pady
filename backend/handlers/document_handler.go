@@ -246,3 +246,71 @@ func (h *documentHandler) ShareDocument(w http.ResponseWriter, r *http.Request) 
 		"message": "Document shared successfully",
 	})
 }
+
+func (h *documentHandler) GetCollaborators(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	id, ok := r.Context().Value(middleware.IDKey).(uuid.UUID)
+	if !ok {
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Unauthorized: Invalid user ID in context"})
+		return
+	}
+
+	docID, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid document ID format"})
+		return
+	}
+
+	collaborators, err := h.documentService.GetCollaborators(r.Context(), docID, id)
+	if err != nil {
+		w.WriteHeader(http.StatusForbidden)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(dto.GetCollaboratorsResponse{
+		Collaborators: collaborators,
+		Message:       "Collaborators retrieved successfully",
+	})
+}
+
+func (h *documentHandler) RemoveCollaborator(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	id, ok := r.Context().Value(middleware.IDKey).(uuid.UUID)
+	if !ok {
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Unauthorized: Invalid user ID in context"})
+		return
+	}
+
+	docID, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid document ID format"})
+		return
+	}
+
+	collaboratorID, err := uuid.Parse(r.PathValue("collaboratorId"))
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid collaborator ID format"})
+		return
+	}
+
+	err = h.documentService.RemoveCollaborator(r.Context(), docID, collaboratorID, id)
+	if err != nil {
+		w.WriteHeader(http.StatusForbidden)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{
+		"message": "Collaborator removed successfully",
+	})
+}

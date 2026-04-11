@@ -49,3 +49,24 @@ func ToDocumentResponseDTOs(docs []*domain.Document) []*dto.DocumentResponse {
 	}
 	return responses
 }
+
+func ToCollaboratorResponseDTO(collaborator *domain.Collaborator) *dto.CollaboratorResponse {
+	return &dto.CollaboratorResponse{
+		UserID:     collaborator.UserID,
+		Name:       collaborator.Name,
+		Email:      collaborator.Email,
+		Permission: collaborator.Permission,
+	}
+}
+
+func ToCollaboratorResponseDTOs(collaborators []*domain.Collaborator) []*dto.CollaboratorResponse {
+	var responses []*dto.CollaboratorResponse
+	for _, collaborator := range collaborators {
+		responses = append(responses, ToCollaboratorResponseDTO(collaborator))
+	}
+
+	if responses == nil {
+		responses = []*dto.CollaboratorResponse{}
+	}
+	return responses
+}

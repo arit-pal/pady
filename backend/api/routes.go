@@ -42,6 +42,8 @@ func NewRouter(dbPool *pgxpool.Pool) http.Handler {
 	mux.HandleFunc("PUT /api/v1/documents/{id}", middleware.RequireAuth(documentHandler.UpdateDocument))
 	mux.HandleFunc("DELETE /api/v1/documents/{id}", middleware.RequireAuth(documentHandler.DeleteDocument))
 	mux.HandleFunc("POST /api/v1/documents/{id}/share", middleware.RequireAuth(documentHandler.ShareDocument))
+	mux.HandleFunc("GET /api/v1/documents/{id}/collaborators", middleware.RequireAuth(documentHandler.GetCollaborators))
+	mux.HandleFunc("DELETE /api/v1/documents/{id}/share/{collaboratorId}", middleware.RequireAuth(documentHandler.RemoveCollaborator))
 
 	return c.Handler(mux)
 }

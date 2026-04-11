@@ -15,6 +15,8 @@ type DocumentRepository interface {
 	UpdateDocument(ctx context.Context, doc *Document, userID uuid.UUID) error
 	DeleteDocument(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
 	ShareDocument(ctx context.Context, docID uuid.UUID, userID uuid.UUID, emails []string, permission string) error
+	GetCollaborators(ctx context.Context, docID uuid.UUID, userID uuid.UUID) ([]*Collaborator, error)
+	RemoveCollaborator(ctx context.Context, docID uuid.UUID, collaboratorID uuid.UUID, userID uuid.UUID) error
 }
 
 type Document struct {
@@ -27,4 +29,11 @@ type Document struct {
 	Permission string    `db:"permission"`
 	CreatedAt  time.Time `db:"created_at"`
 	UpdatedAt  time.Time `db:"updated_at"`
+}
+
+type Collaborator struct {
+	UserID     uuid.UUID `db:"user_id"`
+	Name       string    `db:"name"`
+	Email      string    `db:"email"`
+	Permission string    `db:"permission"`
 }
