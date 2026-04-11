@@ -45,8 +45,13 @@ func (r *documentRepo) CreateDocument(ctx context.Context, doc *Document) error 
 func (r *documentRepo) GetDocumentsByUserID(ctx context.Context, userID uuid.UUID, filter *dto.DocumentFilterDTO) ([]*Document, int, error) {
 	countQuery := `
 		SELECT COUNT(*) 
-		FROM documents 
-		WHERE user_id = $1 AND title ILIKE $2 AND (is_starred = true OR $3 = false)
+		FROM documents d
+		LEFT JOIN document_shares ds ON d.id = ds.document_id AND ds.user_id = $1
+		WHERE d.title ILIKE $2 AND (d.is_starred = true OR $3 = false)
+		AND (
+			($4 = false AND d.user_id = $1) OR 
+			($4 = true AND ds.user_id IS NOT NULL)
+		)
 	`
 	var totalCount int
 	err := r.pool.QueryRow(
@@ -55,6 +60,7 @@ func (r *documentRepo) GetDocumentsByUserID(ctx context.Context, userID uuid.UUI
 		userID,
 		filter.SearchKey,
 		filter.IsStarred,
+		filter.IsShared,
 	).Scan(
 		&totalCount,
 	)
@@ -63,12 +69,19 @@ func (r *documentRepo) GetDocumentsByUserID(ctx context.Context, userID uuid.UUI
 	}
 
 	selectQuery := `
-		SELECT id, user_id, title, metadata, visibility, is_starred, created_at, updated_at 
-		FROM documents 
-		WHERE user_id = $1 AND title ILIKE $2 AND (is_starred = true OR $3 = false)
+		SELECT 
+			d.id, d.user_id, d.title, d.metadata, d.visibility, d.is_starred, d.created_at, d.updated_at,
+			COALESCE(ds.permission, 'owner') AS permission
+		FROM documents d
+		LEFT JOIN document_shares ds ON d.id = ds.document_id AND ds.user_id = $1
+		WHERE d.title ILIKE $2 AND (d.is_starred = true OR $3 = false)
+		AND (
+			($4 = false AND d.user_id = $1) OR 
+			($4 = true AND ds.user_id IS NOT NULL)
+		)
 		ORDER BY
-			CASE WHEN $4 = 'updated_at' THEN updated_at ELSE created_at END DESC
-		LIMIT $5 OFFSET $6
+			CASE WHEN $5 = 'updated_at' THEN d.updated_at ELSE d.created_at END DESC
+		LIMIT $6 OFFSET $7
 	`
 	rows, err := r.pool.Query(
 		ctx,
@@ -76,6 +89,7 @@ func (r *documentRepo) GetDocumentsByUserID(ctx context.Context, userID uuid.UUI
 		userID,
 		filter.SearchKey,
 		filter.IsStarred,
+		filter.IsShared,
 		filter.SortBy,
 		filter.Size,
 		filter.Page,
@@ -97,6 +111,7 @@ func (r *documentRepo) GetDocumentsByUserID(ctx context.Context, userID uuid.UUI
 			&doc.IsStarred,
 			&doc.CreatedAt,
 			&doc.UpdatedAt,
+			&doc.Permission,
 		)
 		if err != nil {
 			return nil, 0, err
@@ -113,9 +128,20 @@ func (r *documentRepo) GetDocumentsByUserID(ctx context.Context, userID uuid.UUI
 
 func (r *documentRepo) GetDocumentByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*Document, error) {
 	query := `
-		SELECT id, user_id, title, metadata, visibility, is_starred, created_at, updated_at
-		FROM documents
-		WHERE id = $1 AND user_id = $2
+		SELECT 
+			d.id, d.user_id, d.title, d.metadata, d.visibility, d.is_starred, d.created_at, d.updated_at,
+			CASE 
+				WHEN d.user_id = $2 THEN 'owner'
+				WHEN ds.permission IS NOT NULL THEN ds.permission
+				WHEN d.visibility = 'public' THEN 'viewer'
+			END AS permission
+		FROM documents d
+		LEFT JOIN document_shares ds ON d.id = ds.document_id AND ds.user_id = $2
+		WHERE d.id = $1 AND (
+			d.user_id = $2 OR 
+			ds.user_id IS NOT NULL OR 
+			d.visibility = 'public'
+		)
 	`
 	doc := &Document{}
 	err := r.pool.QueryRow(
@@ -132,6 +158,7 @@ func (r *documentRepo) GetDocumentByID(ctx context.Context, id uuid.UUID, userID
 		&doc.IsStarred,
 		&doc.CreatedAt,
 		&doc.UpdatedAt,
+		&doc.Permission,
 	)
 	if err != nil {
 		return nil, err
@@ -140,13 +167,16 @@ func (r *documentRepo) GetDocumentByID(ctx context.Context, id uuid.UUID, userID
 	return doc, nil
 }
 
-func (r *documentRepo) UpdateDocument(ctx context.Context, doc *Document) error {
+func (r *documentRepo) UpdateDocument(ctx context.Context, doc *Document, userID uuid.UUID) error {
 	query := `
-		UPDATE documents
-		SET title = $1, metadata = $2, visibility = $3, is_starred = $4, updated_at = NOW()
-		WHERE id = $5 AND user_id = $6
-		RETURNING updated_at
-	`
+        UPDATE documents
+        SET title = $1, metadata = $2, visibility = $3, is_starred = $4, updated_at = NOW()
+        WHERE id = $5 AND (
+            user_id = $6 OR 
+            EXISTS (SELECT 1 FROM document_shares WHERE document_id = $5 AND user_id = $6 AND permission = 'editor')
+        )
+        RETURNING updated_at
+    `
 	err := r.pool.QueryRow(
 		ctx,
 		query,
@@ -155,7 +185,7 @@ func (r *documentRepo) UpdateDocument(ctx context.Context, doc *Document) error 
 		doc.Visibility,
 		doc.IsStarred,
 		doc.ID,
-		doc.UserID,
+		userID,
 	).Scan(
 		&doc.UpdatedAt,
 	)
@@ -171,13 +201,57 @@ func (r *documentRepo) DeleteDocument(ctx context.Context, id uuid.UUID, userID 
 		DELETE FROM documents
 		WHERE id = $1 AND user_id = $2
 	`
-	resp, err := r.pool.Exec(ctx, query, id, userID)
+	resp, err := r.pool.Exec(
+		ctx,
+		query,
+		id,
+		userID,
+	)
 	if err != nil {
 		return err
 	}
 
 	if resp.RowsAffected() == 0 {
 		return errors.New("Document not found or you do not have permission to delete it")
+	}
+
+	return nil
+}
+
+func (r *documentRepo) ShareDocument(ctx context.Context, docID uuid.UUID, userID uuid.UUID, emails []string, permission string) error {
+	var isOwner bool
+	checkQuery := `SELECT EXISTS(SELECT 1 FROM documents WHERE id = $1 AND user_id = $2)`
+
+	err := r.pool.QueryRow(
+		ctx,
+		checkQuery,
+		docID,
+		userID,
+	).Scan(
+		&isOwner,
+	)
+	if err != nil {
+		return err
+	}
+
+	if !isOwner {
+		return errors.New("Access denied: only the document owner can manage sharing")
+	}
+
+	query := `
+		INSERT INTO document_shares (document_id, user_id, permission)
+		SELECT $1, id, $2 FROM users WHERE email = ANY($3) AND status = 'active' AND id != $4
+		ON CONFLICT (document_id, user_id) DO UPDATE SET permission = EXCLUDED.permission
+	`
+	_, err = r.pool.Exec(ctx,
+		query,
+		docID,
+		permission,
+		emails,
+		userID,
+	)
+	if err != nil {
+		return err
 	}
 
 	return nil

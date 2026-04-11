@@ -81,11 +81,13 @@ func (h *documentHandler) GetMyDocuments(w http.ResponseWriter, r *http.Request)
 	sortBy := r.URL.Query().Get("sortBy")
 
 	isStarred := r.URL.Query().Get("is_starred") == "true"
+	isShared := r.URL.Query().Get("is_shared") == "true"
 
 	filter := &dto.DocumentFilterDTO{
 		SearchKey: searchKey,
 		SortBy:    sortBy,
 		IsStarred: isStarred,
+		IsShared:  isShared,
 		Size:      size,
 		Page:      (page - 1) * size,
 	}
@@ -205,5 +207,42 @@ func (h *documentHandler) DeleteDocument(w http.ResponseWriter, r *http.Request)
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{
 		"message": "Document has been successfully deleted",
+	})
+}
+
+func (h *documentHandler) ShareDocument(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	id, ok := r.Context().Value(middleware.IDKey).(uuid.UUID)
+	if !ok {
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Unauthorized: Invalid user ID in context"})
+		return
+	}
+
+	docID, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid document ID format"})
+		return
+	}
+
+	var req dto.ShareDocumentRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid JSON payload"})
+		return
+	}
+
+	err = h.documentService.ShareDocument(r.Context(), docID, id, &req)
+	if err != nil {
+		w.WriteHeader(http.StatusForbidden)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{
+		"message": "Document shared successfully",
 	})
 }

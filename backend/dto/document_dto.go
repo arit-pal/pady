@@ -14,6 +14,7 @@ type DocumentResponse struct {
 	Metadata   json.RawMessage `json:"metadata"`
 	Visibility string          `json:"visibility"`
 	IsStarred  bool            `json:"is_starred"`
+	Permission string          `json:"permission"`
 	CreatedAt  time.Time       `json:"created_at"`
 	UpdatedAt  time.Time       `json:"updated_at"`
 }
@@ -32,6 +33,7 @@ type DocumentFilterDTO struct {
 	SearchKey string `json:"search_key"`
 	SortBy    string `json:"sort_by"`
 	IsStarred bool   `json:"is_starred"`
+	IsShared  bool   `json:"is_shared"`
 	Size      int    `json:"size"`
 	Page      int    `json:"page"`
 }
@@ -57,4 +59,9 @@ type UpdateDocumentRequest struct {
 type UpdateDocumentResponse struct {
 	Document *DocumentResponse `json:"document"`
 	Message  string            `json:"message"`
+}
+
+type ShareDocumentRequest struct {
+	Emails     []string `json:"emails"`
+	Permission string   `json:"permission"`
 }

@@ -12,8 +12,9 @@ type DocumentRepository interface {
 	CreateDocument(ctx context.Context, doc *Document) error
 	GetDocumentsByUserID(ctx context.Context, userID uuid.UUID, filter *dto.DocumentFilterDTO) ([]*Document, int, error)
 	GetDocumentByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*Document, error)
-	UpdateDocument(ctx context.Context, doc *Document) error
+	UpdateDocument(ctx context.Context, doc *Document, userID uuid.UUID) error
 	DeleteDocument(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
+	ShareDocument(ctx context.Context, docID uuid.UUID, userID uuid.UUID, emails []string, permission string) error
 }
 
 type Document struct {
@@ -22,7 +23,8 @@ type Document struct {
 	Title      string    `db:"title"`
 	Metadata   []byte    `db:"metadata"`
 	Visibility string    `db:"visibility"`
-	IsStarred  bool      `json:"is_starred"`
+	IsStarred  bool      `db:"is_starred"`
+	Permission string    `db:"permission"`
 	CreatedAt  time.Time `db:"created_at"`
 	UpdatedAt  time.Time `db:"updated_at"`
 }
