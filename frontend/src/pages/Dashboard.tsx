@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/Auth';
 import { apiClient } from '../api/Api';
@@ -79,11 +79,13 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery);
-      setCurrentPage(1);
+      if (debouncedSearchQuery !== searchQuery) {
+        setDebouncedSearchQuery(searchQuery);
+        setCurrentPage(1);
+      }
     }, 500);
     return () => clearTimeout(timer);
-  }, [searchQuery]);
+  }, [searchQuery, debouncedSearchQuery]);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -104,16 +106,6 @@ const Dashboard: React.FC = () => {
     const timer = setTimeout(fetchUsers, 300);
     return () => clearTimeout(timer);
   }, [shareEmail]);
-
-  const isFirstRender = useRef(true);
-  useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
-    setCurrentPage(1);
-    setIsExpanded(false);
-  }, [activeTab]);
 
   useEffect(() => {
     const fetchDocuments = async () => {
@@ -145,6 +137,12 @@ const Dashboard: React.FC = () => {
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
+
+  const handleTabChange = (tab: TabType) => {
+    setActiveTab(tab);
+    setCurrentPage(1);
+    setIsExpanded(false);
+  };
 
   const handleCreateDocument = async () => {
     try {
@@ -337,15 +335,15 @@ const Dashboard: React.FC = () => {
         </button>
 
         <nav className="space-y-1">
-          <button onClick={() => setActiveTab('documents')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 text-left outline-none ${activeTab === 'documents' ? 'bg-[#ffffff] text-[#2d3338] shadow-sm font-semibold' : 'text-[#596065] hover:bg-[#ebeef2] hover:translate-x-1'}`}>
+          <button onClick={() => handleTabChange('documents')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 text-left outline-none ${activeTab === 'documents' ? 'bg-[#ffffff] text-[#2d3338] shadow-sm font-semibold' : 'text-[#596065] hover:bg-[#ebeef2] hover:translate-x-1'}`}>
             <span className="material-symbols-outlined text-xl">description</span>
             All Files
           </button>
-          <button onClick={() => setActiveTab('recent')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 text-left outline-none ${activeTab === 'recent' ? 'bg-[#ffffff] text-[#2d3338] shadow-sm font-semibold' : 'text-[#596065] hover:bg-[#ebeef2] hover:translate-x-1'}`}>
+          <button onClick={() => handleTabChange('recent')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 text-left outline-none ${activeTab === 'recent' ? 'bg-[#ffffff] text-[#2d3338] shadow-sm font-semibold' : 'text-[#596065] hover:bg-[#ebeef2] hover:translate-x-1'}`}>
             <span className="material-symbols-outlined text-xl">schedule</span>
             Recent
           </button>
-          <button onClick={() => setActiveTab('starred')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 text-left outline-none ${activeTab === 'starred' ? 'bg-[#ffffff] text-[#2d3338] shadow-sm font-semibold' : 'text-[#596065] hover:bg-[#ebeef2] hover:translate-x-1'}`}>
+          <button onClick={() => handleTabChange('starred')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 text-left outline-none ${activeTab === 'starred' ? 'bg-[#ffffff] text-[#2d3338] shadow-sm font-semibold' : 'text-[#596065] hover:bg-[#ebeef2] hover:translate-x-1'}`}>
             <span className="material-symbols-outlined text-xl">grade</span>
             Starred
           </button>
@@ -363,8 +361,8 @@ const Dashboard: React.FC = () => {
         <header className="sticky top-0 z-30 bg-[#f9f9fb] px-6 md:px-12 py-4 flex items-center justify-between w-full max-w-[1920px] mx-auto font-['Manrope'] tracking-tight text-sm font-medium border-b border-surface-container-highest/20">
           <div className="flex items-center gap-12">
             <nav className="hidden md:flex items-center gap-8">
-              <button onClick={() => setActiveTab('documents')} className={activeTab === 'documents' ? "text-[#2d3338] font-bold border-b-2 border-[#5d5e61] pb-1 outline-none" : "text-[#596065] hover:text-[#2d3338] transition-colors duration-200 outline-none"}>Documents</button>
-              <button onClick={() => setActiveTab('shared')} className={activeTab === 'shared' ? "text-[#2d3338] font-bold border-b-2 border-[#5d5e61] pb-1 outline-none" : "text-[#596065] hover:text-[#2d3338] transition-colors duration-200 outline-none"}>Shared</button>
+              <button onClick={() => handleTabChange('documents')} className={activeTab === 'documents' ? "text-[#2d3338] font-bold border-b-2 border-[#5d5e61] pb-1 outline-none" : "text-[#596065] hover:text-[#2d3338] transition-colors duration-200 outline-none"}>Documents</button>
+              <button onClick={() => handleTabChange('shared')} className={activeTab === 'shared' ? "text-[#2d3338] font-bold border-b-2 border-[#5d5e61] pb-1 outline-none" : "text-[#596065] hover:text-[#2d3338] transition-colors duration-200 outline-none"}>Shared</button>
             </nav>
           </div>
 
@@ -451,15 +449,15 @@ const Dashboard: React.FC = () => {
                         <tr
                           key={doc.id}
                           onClick={() => navigate(`/document/${doc.id}`)}
-                          className={`hover:bg-surface-container-low/30 transition-colors group cursor-pointer ${openMenuId === doc.id ? 'relative z-20' : 'relative z-0'}`}
+                          className={`hover:bg-surface-container-low/30 transition-colors group cursor-pointer ${openMenuId === doc.id ? 'relative z-[50]' : 'relative z-0'}`}
                         >
-                          <td className="px-6 py-5">
+                          <td className="px-6 py-5 w-1/2">
                             <div className="flex items-center gap-4">
                               <div className="w-10 h-10 rounded-lg bg-primary-container flex items-center justify-center text-primary shrink-0">
                                 <span className="material-symbols-outlined">article</span>
                               </div>
-                              <div>
-                                <p className="font-semibold text-on-surface">
+                              <div className="min-w-0">
+                                <p className="font-semibold text-on-surface truncate max-w-[180px] sm:max-w-xs md:max-w-sm lg:max-w-md">
                                   {doc.title}
                                 </p>
                               </div>
@@ -476,22 +474,24 @@ const Dashboard: React.FC = () => {
                             </span>
                           </td>
                           <td
-                            className={`px-6 py-5 text-right ${openMenuId === doc.id ? 'relative z-[30]' : 'relative z-10'}`}
+                            className={`px-6 py-5 text-right ${openMenuId === doc.id ? 'relative z-[60]' : 'relative z-10'}`}
                             onClick={(e) => e.stopPropagation()}
                           >
-                            <button
-                              onClick={() => {
-                                setOpenMenuId(openMenuId === doc.id ? null : doc.id);
-                                setIsProfileMenuOpen(false);
-                              }}
-                              className="p-2 rounded-full hover:bg-surface-container text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100 outline-none"
-                            >
-                              <span className="material-symbols-outlined">more_vert</span>
-                            </button>
+                            {doc.permission !== 'viewer' && (
+                              <button
+                                onClick={() => {
+                                  setOpenMenuId(openMenuId === doc.id ? null : doc.id);
+                                  setIsProfileMenuOpen(false);
+                                }}
+                                className="p-2 rounded-full hover:bg-surface-container text-on-surface-variant opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100 outline-none"
+                              >
+                                <span className="material-symbols-outlined">more_vert</span>
+                              </button>
+                            )}
 
-                            {openMenuId === doc.id && (
+                            {openMenuId === doc.id && doc.permission !== 'viewer' && (
                               <div
-                                className="absolute right-8 bottom-12 mb-1 w-48 bg-surface-container-lowest border border-outline-variant/20 rounded-xl shadow-[0_-8px_30px_rgba(0,0,0,0.12)] py-2 z-[100] animate-in fade-in slide-in-from-bottom-2 duration-200"
+                                className="absolute right-8 top-full mt-1 w-48 bg-surface-container-lowest border border-outline-variant/20 rounded-xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] py-2 z-[100] animate-in fade-in slide-in-from-top-2 duration-200"
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 {(doc.permission === 'owner' || doc.permission === 'editor') && (
@@ -599,11 +599,7 @@ const Dashboard: React.FC = () => {
                         <div className="flex justify-center items-center text-sm font-medium text-on-surface-variant">
                           No more recent documents.
                           <button
-                            onClick={() => {
-                              setActiveTab('documents');
-                              setIsExpanded(true);
-                              setCurrentPage(1);
-                            }}
+                            onClick={() => handleTabChange('documents')}
                             className="text-primary hover:text-primary-dim font-bold transition-colors ml-1.5 outline-none hover:underline"
                           >
                             Visit all documents
@@ -619,8 +615,14 @@ const Dashboard: React.FC = () => {
       </main>
 
       {shareModal.isOpen && (
-        <div className="fixed inset-0 bg-inverse-surface/40 backdrop-blur-[2px] z-[200] flex items-center justify-center p-4">
-          <div className="bg-surface-container-lowest rounded-2xl w-full max-w-lg p-6 shadow-[0_20px_60px_-10px_rgba(0,0,0,0.2)] animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+        <div
+          className="fixed inset-0 bg-inverse-surface/40 backdrop-blur-[2px] z-[200] flex items-center justify-center p-4"
+          onClick={() => setShareModal({ isOpen: false, doc: null })}
+        >
+          <div
+            className="bg-surface-container-lowest rounded-2xl w-full max-w-lg p-6 shadow-[0_20px_60px_-10px_rgba(0,0,0,0.2)] animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold font-headline text-on-surface truncate pr-4">
                 Share "{shareModal.doc?.title}"
@@ -670,7 +672,7 @@ const Dashboard: React.FC = () => {
                         }}
                       >
                         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-container to-surface-container-highest text-on-primary-container flex items-center justify-center font-bold text-[11px] shrink-0">
-                          {u.full_name.charAt(0).toUpperCase()}
+                          {u.full_name ? u.full_name.charAt(0).toUpperCase() : 'U'}
                         </div>
                         <div className="overflow-hidden">
                           <p className="text-sm font-semibold text-on-surface truncate">{u.full_name}</p>
@@ -757,8 +759,14 @@ const Dashboard: React.FC = () => {
       )}
 
       {renameData.isOpen && (
-        <div className="fixed inset-0 bg-inverse-surface/40 backdrop-blur-[2px] z-[200] flex items-center justify-center p-4">
-          <div className="bg-surface-container-lowest rounded-2xl w-full max-w-md p-6 shadow-[0_20px_60px_-10px_rgba(0,0,0,0.2)] animate-in fade-in zoom-in-95 duration-200">
+        <div
+          className="fixed inset-0 bg-inverse-surface/40 backdrop-blur-[2px] z-[200] flex items-center justify-center p-4"
+          onClick={() => setRenameData({ isOpen: false, docId: '', title: '' })}
+        >
+          <div
+            className="bg-surface-container-lowest rounded-2xl w-full max-w-md p-6 shadow-[0_20px_60px_-10px_rgba(0,0,0,0.2)] animate-in fade-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h3 className="text-xl font-bold font-headline text-on-surface mb-4">Rename Document</h3>
             <input
               type="text"
@@ -787,8 +795,14 @@ const Dashboard: React.FC = () => {
       )}
 
       {confirmData.isOpen && (
-        <div className="fixed inset-0 bg-inverse-surface/40 backdrop-blur-[2px] z-[200] flex items-center justify-center p-4">
-          <div className="bg-surface-container-lowest rounded-2xl w-full max-w-md p-6 shadow-[0_20px_60px_-10px_rgba(0,0,0,0.2)] animate-in fade-in zoom-in-95 duration-200">
+        <div
+          className="fixed inset-0 bg-inverse-surface/40 backdrop-blur-[2px] z-[200] flex items-center justify-center p-4"
+          onClick={() => setConfirmData({ isOpen: false, type: null, docId: '' })}
+        >
+          <div
+            className="bg-surface-container-lowest rounded-2xl w-full max-w-md p-6 shadow-[0_20px_60px_-10px_rgba(0,0,0,0.2)] animate-in fade-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h3 className="text-xl font-bold font-headline text-on-surface mb-2">Are you sure?</h3>
             <p className="text-on-surface-variant font-medium mb-6 text-sm leading-relaxed">
               {confirmData.type === 'profile'
