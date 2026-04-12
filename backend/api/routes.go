@@ -6,6 +6,7 @@ import (
 	"arit-pal/pady/middleware"
 	"arit-pal/pady/service"
 	"net/http"
+	"os"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/cors"
@@ -14,7 +15,7 @@ import (
 func NewRouter(dbPool *pgxpool.Pool) http.Handler {
 
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"*"},
+		AllowedOrigins:   []string{os.Getenv("FRONTEND_URL")},
 		AllowedMethods:   []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodOptions},
 		AllowedHeaders:   []string{"Content-Type", "Authorization"},
 		AllowCredentials: true,

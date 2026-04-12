@@ -19,6 +19,7 @@
 # Docker ignoring
 pgdata/
 postgres_data/
+docker-compose.override.yml
 
 # General OS files
 Thumbs.db
