@@ -1,12 +1,12 @@
 # pady
 
-A real-time collaboration tool for web documents. Create, edit, and share rich text documents with a Google Docs-like editing experience.
+A collaborative document editing platform. Create, edit, and share documents with real-time collaboration support.
 
 ## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | React 19, TypeScript, Vite 7, Tailwind CSS 3, TipTap (ProseMirror) |
+| Frontend | React 19, TypeScript, Vite 7, Tailwind CSS 3 |
 | Backend | Go 1.25, pgx/v5, golang-migrate, JWT auth |
 | Database | PostgreSQL 17 (Alpine) |
 | Infrastructure | Docker Compose, Nginx |
@@ -35,15 +35,7 @@ pady/
 │   │   ├── pages/              # Page components (Login, SignUp, Dashboard, Editor, Privacy, Terms)
 │   │   ├── context/            # Auth context (AuthProvider, useAuth)
 │   │   ├── api/Api.ts          # Axios client with JWT interceptors
-│   │   ├── models/Models.ts    # TypeScript interfaces (User, Document, Collaborator)
-│   │   └── editor/             # Rich text editor module
-│   │       ├── EditorContent.tsx    # TipTap editor wrapper
-│   │       ├── Toolbar.tsx          # Formatting toolbar
-│   │       ├── Statusbar.tsx        # Word count + save status
-│   │       ├── MenuButton.tsx       # Reusable toolbar button
-│   │       ├── ShortcutsHelp.tsx    # Keyboard shortcuts modal
-│   │       ├── serializer.ts        # Legacy plain text → TipTap doc converter
-│   │       └── extensions/          # TipTap extension config
+│   │   └── models/Models.ts    # TypeScript interfaces (User, Document, Collaborator)
 │   ├── vite.config.ts
 │   ├── tailwind.config.js
 │   └── eslint.config.js
@@ -64,7 +56,7 @@ pady/
 1. **Clone the repository**
 
    ```bash
-   git clone <repo-url> && cd pady
+   git clone https://github.com/arit-pal/pady.git && cd pady
    ```
 
 2. **Create your environment file**
@@ -98,7 +90,7 @@ pady/
    | Backend API | http://localhost:8000 |
    | Postgres | localhost:5432 |
 
-> **Note:** Always use `--build` after code changes. Without it, Docker uses cached images and changes won't be reflected.
+   > **Note:** Always use `--build` after code changes. Without it, Docker uses cached images and changes won't be reflected.
 
 ### Running Without Docker
 
@@ -107,7 +99,7 @@ pady/
 ```bash
 cd backend
 go run main.go
-# Reads ../.env for DB config, runs migrations automatically
+# Reads ../.env for DB config, connects to postgres, runs migrations automatically
 ```
 
 **Frontend only** (requires a running backend):
@@ -121,47 +113,6 @@ npm run dev
 
 ## Features
 
-### Rich Text Editor
-
-- **Formatting**: Bold, italic, underline, strikethrough, inline code
-- **Headings**: H1, H2, H3
-- **Lists**: Bullet lists, ordered lists, task lists (checkboxes)
-- **Blocks**: Blockquotes, code blocks with syntax styling, horizontal rules
-- **Undo/Redo**: Full history with keyboard shortcuts
-
-### Markdown Shortcuts
-
-Type markdown syntax inline and it auto-converts on space:
-
-| Input | Result |
-|-------|--------|
-| `# ` | Heading 1 |
-| `## ` | Heading 2 |
-| `### ` | Heading 3 |
-| `**text**` | **Bold** |
-| `*text*` | *Italic* |
-| `~~text~~` | ~~Strikethrough~~ |
-| `` `code` `` | `Inline code` |
-| ```` ``` ```` | Code block |
-| `- ` or `* ` | Bullet list |
-| `1. ` | Ordered list |
-| `> ` | Blockquote |
-| `---` | Horizontal rule |
-
-### Keyboard Shortcuts
-
-| Shortcut | Action |
-|----------|--------|
-| Ctrl+B | Bold |
-| Ctrl+I | Italic |
-| Ctrl+U | Underline |
-| Ctrl+Shift+X | Strikethrough |
-| Ctrl+Shift+C | Inline code |
-| Ctrl+Z | Undo |
-| Ctrl+Shift+Z | Redo |
-
-Press the keyboard icon in the toolbar to view all shortcuts.
-
 ### Document Management
 
 - Create, rename, and delete documents
@@ -170,15 +121,12 @@ Press the keyboard icon in the toolbar to view all shortcuts.
 - Share documents with collaborators (owner/editor/viewer roles)
 - Search users by email when sharing
 
-### Editor UX
+### Editor
 
-- **Auto-save**: Content saves automatically with a 1-second debounce
-- **Save status indicator**: Shows saving/saved/error state in the toolbar and status bar
-- **Word and character count**: Live count in the status bar
-- **Unsaved changes protection**: Warns before leaving with unsaved edits (tab close, navigation)
-- **Legacy content migration**: Existing plain-text documents auto-convert to rich text on open
-- **Responsive design**: Toolbar adapts to screen size, touch-friendly on mobile
-- **Viewer mode**: Read-only editor with dimmed toolbar for shared view-only access
+- Plain text editing with auto-save (1-second debounce)
+- Save status indicator (saving/saved/error)
+- Unsaved changes warning on navigation
+- Viewer mode for read-only access
 
 ### Authentication
 
